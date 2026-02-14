@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { type FarmerProfileInput, type MatchedScheme, type SchemeAnalysisOutput } from "@/ai/schemas";
+import { type FarmerProfileInput, type SchemeAnalysisOutput } from "@/ai/schemas";
 import { type FarmerSummaryOutput } from "@/ai/flows/farmer-summary-generator";
 import { getEligibleSchemes, getFarmerSummary, getPredictedSchemes } from "@/app/actions";
 import FarmerProfileForm from "@/app/components/farmer-profile-form";
@@ -34,7 +34,7 @@ export default function Home() {
       setIsLoading(false); // Stop main loading indicator
 
       // Now, generate the summary and predictions in parallel
-      if (eligibilityResults && (eligibilityResults.matchedSchemes.length > 0 || (eligibilityResults.nearMisses && eligibilityResults.nearMisses.length > 0))) {
+      if (eligibilityResults && (eligibilityResults.eligible_schemes.length > 0 || (eligibilityResults.nearMisses && eligibilityResults.nearMisses.length > 0))) {
         setIsSummaryLoading(true);
         setIsPredictionsLoading(true);
 
@@ -96,8 +96,8 @@ export default function Home() {
             <FarmerProfileForm onSubmit={handleFormSubmit} isLoading={isLoading} />
             { (isLoading || results) && <SchemeResults results={results} isLoading={isLoading} farmerProfile={farmerProfile} />}
             
-            { results && (results.matchedSchemes.length > 0 || (results.nearMisses && results.nearMisses.length > 0)) && !isLoading &&
-              <DocumentReadinessChecker matchedSchemes={results.matchedSchemes} />
+            { results && (results.eligible_schemes.length > 0 || (results.nearMisses && results.nearMisses.length > 0)) && !isLoading &&
+              <DocumentReadinessChecker eligibleSchemes={results.eligible_schemes} />
             }
 
             { (isSummaryLoading || summary) && <SummaryReport summary={summary} isLoading={isSummaryLoading} /> }

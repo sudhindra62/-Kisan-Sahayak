@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { MatchedScheme } from '@/ai/schemas';
+import type { EligibleScheme } from '@/ai/schemas';
 import { getDocumentReadiness } from '@/app/actions';
 import type { DocumentReadinessOutput } from '@/ai/flows/document-readiness-checker';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -24,7 +24,7 @@ const commonDocuments = [
 ];
 
 type DocumentReadinessCheckerProps = {
-  matchedSchemes: MatchedScheme[];
+  eligibleSchemes: EligibleScheme[];
 };
 
 const LoadingSkeleton = () => (
@@ -81,7 +81,7 @@ function ReadinessResults({ results }: { results: DocumentReadinessOutput }) {
 }
 
 export default function DocumentReadinessChecker({
-  matchedSchemes,
+  eligibleSchemes,
 }: DocumentReadinessCheckerProps) {
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -112,7 +112,7 @@ export default function DocumentReadinessChecker({
     try {
       const readinessResults = await getDocumentReadiness({
         userDocuments: selectedDocs,
-        matchedSchemes,
+        matchedSchemes: eligibleSchemes,
       });
       setResults(readinessResults);
     } catch (error) {

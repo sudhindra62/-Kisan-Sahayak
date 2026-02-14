@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getSchemeApplicationGuide } from "@/app/actions";
 import type { SchemeApplicationGuideOutput } from "@/ai/flows/scheme-application-guide-generator";
-import type { FarmerProfileInput, MatchedScheme, NearMiss, SchemeAnalysisOutput } from "@/ai/schemas";
+import type { FarmerProfileInput, EligibleScheme, NearMiss, SchemeAnalysisOutput } from "@/ai/schemas";
 
 
 type SchemeResultsProps = {
@@ -114,7 +114,7 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
   const [generatedGuides, setGeneratedGuides] = useState<Record<string, SchemeApplicationGuideOutput>>({});
   const { toast } = useToast();
 
-  const handleGenerateGuide = async (scheme: MatchedScheme) => {
+  const handleGenerateGuide = async (scheme: EligibleScheme) => {
       if (!farmerProfile) {
           toast({
               variant: "destructive",
@@ -124,18 +124,18 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
           return;
       }
 
-      setGuideLoading(scheme.name);
+      setGuideLoading(scheme.scheme_name);
       try {
           const guide = await getSchemeApplicationGuide({
               farmerProfile,
               scheme: {
-                  name: scheme.name,
+                  name: scheme.scheme_name,
                   benefits: scheme.benefits,
                   eligibilityCriteria: scheme.eligibilityCriteria,
                   applicationGuideLink: scheme.applicationGuideLink,
               }
           });
-          setGeneratedGuides(prev => ({...prev, [scheme.name]: guide}));
+          setGeneratedGuides(prev => ({...prev, [scheme.scheme_name]: guide}));
       } catch (error) {
            toast({
               variant: "destructive",
@@ -160,7 +160,7 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
     return null;
   }
   
-  const hasMatches = results.matchedSchemes.length > 0;
+  const hasMatches = results.eligible_schemes.length > 0;
   const hasNearMisses = results.nearMisses && results.nearMisses.length > 0;
 
   if (!hasMatches && !hasNearMisses) {
@@ -183,19 +183,12 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
         <>
           <h2 className="results-title">Relevant Schemes Found</h2>
           <div className="space-y-5">
-            {results.matchedSchemes.map((scheme, index) => (
+            {results.eligible_schemes.map((scheme, index) => (
               <div className="result-card" key={index}>
                 <div className="result-card-header">
-                    <h3><Leaf className="mr-3 text-current h-6 w-6" /> {scheme.name}</h3>
-                    <span className="score-badge">{scheme.semantic_similarity_score}% Match</span>
+                    <h3><Leaf className="mr-3 text-current h-6 w-6" /> {scheme.scheme_name}</h3>
+                    <span className="score-badge">{scheme.eligibility_score}% Match</span>
                 </div>
-
-                {scheme.is_possibly_relevant && (
-                  <div className="possible-relevance-badge">
-                    <Info className="h-4 w-4 mr-2" />
-                    Possibly Relevant – Review Recommended
-                  </div>
-                )}
                 
                 <div className="result-section">
                   <h4>Benefits</h4>
@@ -204,21 +197,21 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
 
                 <div className="result-section">
                   <h4>Relevance Analysis</h4>
-                  <p>{scheme.relevance_reason}</p>
+                  <p>{scheme.explanation}</p>
                 </div>
                 
                 <Accordion type="single" collapsible className="w-full mt-5 guide-accordion">
-                  <AccordionItem value={scheme.name}>
+                  <AccordionItem value={scheme.scheme_name}>
                       <AccordionTrigger
                           onClick={() => {
-                              if (!generatedGuides[scheme.name] && guideLoading !== scheme.name) {
+                              if (!generatedGuides[scheme.scheme_name] && guideLoading !== scheme.scheme_name) {
                                   handleGenerateGuide(scheme);
                               }
                           }}
-                          disabled={guideLoading === scheme.name}
+                          disabled={guideLoading === scheme.scheme_name}
                           className="guide-accordion-trigger"
                       >
-                          {guideLoading === scheme.name ? (
+                          {guideLoading === scheme.scheme_name ? (
                               <div className="flex items-center text-amber-300">
                                   <span className="loading-spinner-small mr-3"></span>
                                   Generating Your Guide...
@@ -231,9 +224,9 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
                           )}
                       </AccordionTrigger>
                       <AccordionContent className="guide-accordion-content">
-                          {generatedGuides[scheme.name] ? (
-                              <ApplicationGuideDisplay guide={generatedGuides[scheme.name]} />
-                          ) : guideLoading !== scheme.name ? (
+                          {generatedGuides[scheme.scheme_name] ? (
+                              <ApplicationGuideDisplay guide={generatedGuides[scheme.scheme_name]} />
+                          ) : guideLoading !== scheme.scheme_name ? (
                               <div className="p-4 text-center text-slate-400">
                                   Click to generate a personalized step-by-step guide using AI.
                               </div>

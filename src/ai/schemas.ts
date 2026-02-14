@@ -17,35 +17,21 @@ export const FarmerProfileInputSchema = z.object({
 export const GovernmentSchemeSchema = z.object({
   name: z.string().describe('The name of the government scheme.'),
   benefits: z.string().describe('A summary of the benefits provided by the scheme.'),
-  eligibilityCriteria: z.string().describe('Detailed criteria for eligibility (e.g., "Farmers with less than 2 acres of land in drought-prone areas", "Annual income below X", "Cultivates specific crop").'),
+  eligibilityCriteria: z.string().describe('Detailed criteria for eligibility.'),
   applicationGuideLink: z.string().optional().describe('Link to the official application guide or portal.'),
+  scheme_category: z.string().optional().describe('The category of the scheme.'),
+  base_subsidy_amount: z.number().optional().describe('The base subsidy amount before adjustments.'),
 });
 
-export const MatchedSchemeSchema = z.object({
-  name: z.string().describe('The name of the government scheme.'),
-  benefits: z.string().describe('A summary of the benefits provided by the scheme.'),
-  eligibilityCriteria: z.string().describe('Detailed criteria for eligibility.'),
-  semantic_similarity_score: z
-    .number()
-    .min(0)
-    .max(100)
-    .describe(
-      "A score from 0-100 indicating the semantic relevance of the scheme to the farmer's profile. Higher scores mean better relevance."
-    ),
-  relevance_reason: z
-    .string()
-    .describe(
-      'A detailed explanation of why the scheme is considered relevant, referencing both the farmer\'s profile and the scheme\'s criteria. If possibly relevant, this should state what needs to be reviewed.'
-    ),
-  is_possibly_relevant: z
-    .boolean()
-    .describe(
-      'True if the scheme is only possibly relevant and requires the user to review the details.'
-    ),
-  applicationGuideLink: z
-    .string()
-    .optional()
-    .describe('Link to the official application guide or portal.'),
+export const EligibleSchemeSchema = z.object({
+  scheme_name: z.string().describe("The name of the eligible government scheme."),
+  adjusted_subsidy_amount: z.string().describe("The estimated subsidy amount adjusted for the farmer's state and other factors, formatted as a currency string (e.g., '₹26,000')."),
+  eligibility_score: z.number().min(0).max(100).describe("A score from 0-100 indicating how well the farmer's profile matches the scheme's criteria."),
+  scheme_category: z.string().describe("The category of the scheme (e.g., 'Crop Support Subsidy', 'National', 'Irrigation')."),
+  explanation: z.string().describe("A clear, personalized explanation of why the farmer qualifies for this scheme, referencing their profile details."),
+  benefits: z.string().describe("A summary of the scheme's benefits."),
+  eligibilityCriteria: z.string().describe('The original, detailed criteria for eligibility used for guide generation.'),
+  applicationGuideLink: z.string().optional().describe('Link to the official application guide or portal.'),
 });
 
 // New Schema for Near Misses
@@ -58,8 +44,8 @@ const NearMissSchemeSchema = z.object({
 
 // Output Schema for the analysis
 export const SchemeAnalysisOutputSchema = z.object({
-  matchedSchemes: z
-    .array(MatchedSchemeSchema)
+  eligible_schemes: z
+    .array(EligibleSchemeSchema)
     .describe(
       "A list of government schemes that are semantically relevant to the farmer's profile, sorted by relevance score."
     ),
@@ -70,7 +56,7 @@ export const SchemeAnalysisOutputSchema = z.object({
 // Schemas for Document Readiness Checker
 export const DocumentReadinessInputSchema = z.object({
   userDocuments: z.array(z.string()).describe("A list of documents that the farmer has."),
-  matchedSchemes: z.array(MatchedSchemeSchema).describe("The schemes the farmer was matched with."),
+  matchedSchemes: z.array(EligibleSchemeSchema).describe("The schemes the farmer was matched with."),
 });
 
 export const DocumentReadinessOutputSchema = z.object({

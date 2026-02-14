@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Analyzes a farmer's profile against government schemes to determine eligibility using semantic search.
+ * @fileOverview Analyzes a farmer's profile against a programmatically generated database of government schemes to determine eligibility.
  *
  * - analyzeFarmerSchemeEligibility - A function that handles the scheme eligibility analysis process.
  * - FarmerProfileInput - The input type for the analyzeFarmerSchemeEligibility function.
@@ -10,65 +10,89 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { FarmerProfileInputSchema, GovernmentSchemeSchema, SchemeAnalysisOutputSchema } from '@/ai/schemas';
+import { costOfLivingMultipliers, crops, fallbackScheme, nationalSchemes, schemeTemplates } from '@/ai/database/scheme-data';
 
 // Input Schema for farmer's profile
 export type FarmerProfileInput = z.infer<typeof FarmerProfileInputSchema>;
-
-// Schema for a single government scheme (internal to the tool/prompt)
-type GovernmentScheme = z.infer<typeof GovernmentSchemeSchema>; // Not exported, used internally.
-
 // Output Schema for the analysis
 export type SchemeAnalysisOutput = z.infer<typeof SchemeAnalysisOutputSchema>;
 
+// Internal helper to shuffle arrays for realistic data generation
+function shuffleArray<T>(array: T[]): T[] {
+  const newArr = [...array];
+  for (let i = newArr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+  }
+  return newArr;
+}
 
-// Define the tool to fetch government schemes
+
+// Define the tool to dynamically generate government schemes for a given state.
 const getGovernmentSchemes = ai.defineTool(
   {
     name: 'getGovernmentSchemes',
-    description: 'Retrieves a list of all available government agricultural schemes with their detailed eligibility criteria and benefits.',
-    inputSchema: z.object({}), // No specific input needed to get all schemes for this use case
+    description: 'Generates a realistic, programmatically created list of government agricultural schemes for a specific state, including national and fallback schemes.',
+    inputSchema: z.object({
+      state: z.string().describe("The farmer's state, used to generate state-specific schemes."),
+    }),
     outputSchema: z.array(GovernmentSchemeSchema),
   },
-  async () => {
-    // This is a placeholder for fetching data from Firestore.
-    // In a real application, this would query a Firestore collection.
-    // For now, return hardcoded scheme data.
-    const schemes: GovernmentScheme[] = [
-      {
-        name: 'Pradhan Mantri Fasal Bima Yojana (PMFBY)',
-        benefits: 'Provides insurance coverage and financial support to farmers in case of crop failure due to natural calamities, pests & diseases.',
-        eligibilityCriteria: 'All farmers including sharecroppers and tenant farmers growing notified crops in notified areas are eligible. Compulsory for loanee farmers availing Crop Loan/KCC account for notified crops. Voluntary for non-loanee farmers.',
-        applicationGuideLink: 'https://pmfby.gov.in/'
-      },
-      {
-        name: 'Kisan Credit Card (KCC) Scheme',
-        benefits: 'Provides adequate and timely credit support from the banking system to the farmers for their cultivation needs.',
-        eligibilityCriteria: 'Farmers, individual/joint cultivators, tenant farmers, oral lessees & sharecroppers, SHGs/JLG of farmers are eligible. Minimum age 18 years, maximum 75 years.',
-        applicationGuideLink: 'https://www.nabard.org/content.aspx?id=599'
-      },
-      {
-        name: 'Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)',
-        benefits: 'Provides income support to all eligible farmer families across the country to supplement their financial needs.',
-        eligibilityCriteria: 'All landholding farmer families, subject to certain exclusion criteria. Exclusion criteria include institutional landholders, former and present holders of constitutional posts, former and present Ministers/State Ministers, Members of LokSabha/ RajyaSabha/ State Legislative Assemblies/ State Legislative Councils, Mayors of Municipal Corporations, Chairpersons of District Panchayats, and also those government employees.',
-        applicationGuideLink: 'https://pmkisan.gov.in/'
-      },
-      {
-        name: 'Soil Health Card Scheme',
-        benefits: 'Provides farmers with a Soil Health Card (SHC) every 2 years, which contains nutrient status of his/her soil with respect to 12 parameters and advises on dosage of fertilizers and also the requisite soil amendments that a farmer should undertake.',
-        eligibilityCriteria: 'All farmers with agricultural land are eligible.',
-        applicationGuideLink: 'https://www.soilhealth.dac.gov.in/'
-      },
-      {
-        name: 'National Food Security Mission (NFSM)',
-        benefits: 'Aims to increase production of rice, wheat, pulses, coarse cereals and commercial crops, through area expansion and productivity enhancement.',
-        eligibilityCriteria: 'Farmers cultivating specific crops in identified districts, focused on increasing productivity and resource use efficiency. Eligibility often tied to adoption of recommended practices.',
-      }
-    ];
-    return schemes;
+  async ({ state }) => {
+    const generatedSchemes: z.infer<typeof GovernmentSchemeSchema>[] = [];
+    const multiplier = costOfLivingMultipliers[state] || 1.0;
+
+    // 1. Generate state-specific schemes
+    const shuffledTemplates = shuffleArray([...schemeTemplates]);
+    // Each state gets at least 10 schemes, up to 14
+    const numStateSchemes = 10 + Math.floor(Math.random() * 5); 
+
+    for (let i = 0; i < numStateSchemes; i++) {
+      const template = shuffledTemplates[i];
+      const shuffledCrops = shuffleArray([...crops]);
+      // Each scheme applies to 5-9 crops
+      const numCropsForScheme = 5 + Math.floor(Math.random() * 5);
+      const relevantCrops = shuffledCrops.slice(0, numCropsForScheme);
+
+      const baseSubsidy = template.baseSubsidy;
+      const adjustedSubsidy = Math.round(baseSubsidy * multiplier);
+
+      // Create dynamic eligibility criteria text for the AI to parse
+      const landSizeCrit = `Eligibility depends on land holding size (Small: 0-2 acres, Medium: 2-5 acres, Large: >5 acres).`;
+      const incomeCrit = `Income level is a key factor (e.g., priority for annual income < ₹1,00,000, reduced benefits for > ₹5,00,000).`;
+      const cropCrit = `This scheme is applicable for farmers growing crops like ${relevantCrops.slice(0, 3).join(', ')}, and other related crops.`;
+      
+      const scheme: z.infer<typeof GovernmentSchemeSchema> = {
+        name: `${state} ${template.category}`,
+        benefits: `${template.benefits}`,
+        eligibilityCriteria: `${cropCrit} ${landSizeCrit} ${incomeCrit}`,
+        scheme_category: template.category,
+        base_subsidy_amount: adjustedSubsidy,
+      };
+      generatedSchemes.push(scheme);
+    }
+
+    // 2. Add all national schemes to the list
+    nationalSchemes.forEach(s => {
+        generatedSchemes.push({
+            ...s,
+            scheme_category: 'National',
+            base_subsidy_amount: s.name.includes('PM-KISAN') ? 6000 : 20000 // estimate
+        });
+    });
+    
+    // 3. Add the ultimate fallback scheme
+    generatedSchemes.push({
+        ...fallbackScheme,
+        scheme_category: 'Fallback',
+        base_subsidy_amount: 5000
+    });
+
+    return generatedSchemes;
   }
 );
 
-// Define the prompt that uses the fetched schemes and farmer profile
+// Define the prompt that uses the dynamically generated schemes and the farmer's profile
 const farmerSchemeEligibilityPrompt = ai.definePrompt({
   name: 'farmerSchemeEligibilityPrompt',
   input: {
@@ -78,19 +102,9 @@ const farmerSchemeEligibilityPrompt = ai.definePrompt({
     }),
   },
   output: { schema: SchemeAnalysisOutputSchema },
-  prompt: `You are an advanced AI assistant specializing in semantic analysis for agricultural schemes. Your task is to evaluate a farmer's profile against a list of government schemes using semantic matching to determine relevance.
+  prompt: `You are a hyper-intelligent AI assistant for Indian agriculture, with deep expertise in government schemes. Your task is to act as the complete backend logic for finding and tailoring schemes for a farmer. You MUST follow all rules precisely.
 
-- **Semantic Search:** Understand synonyms and related concepts (e.g., 'rice' is similar to 'paddy'). Tolerate minor spelling mistakes in the user input. Match schemes even if the wording differs but the meaning is similar.
-- **Scoring:** For each scheme, calculate a \`semantic_similarity_score\` from 0 to 100 based on how well the farmer's profile matches the scheme's intent and criteria. A score of 100 is a perfect match. A score below 50 should be discarded.
-- **Reasoning:** Provide a clear \`relevance_reason\` for each match. This reason should explain the connection between the farmer's profile (land size, location, crop, income) and the scheme's eligibility criteria.
-- **Possible Relevance:** If a scheme's relevance is uncertain or depends on specific criteria not fully covered in the profile (e.g., being part of a specific farmer group, detailed income brackets, exact location definitions like 'drought-prone area'), mark \`is_possibly_relevant\` as true. In the \`relevance_reason\` for such cases, clearly state what the farmer needs to review.
-- **Eligibility Criteria**: For each relevant scheme, you MUST include the original 'Eligibility Criteria' text from the provided scheme list in the \`eligibilityCriteria\` field.
-- **Near-Miss Analysis:** After identifying matched schemes, analyze the schemes that were *not* a strong match but where the farmer is close to qualifying (e.g., fails only one or two key criteria). These are "near-misses". For each near-miss, populate the \`nearMisses\` array.
-- \`reason_not_eligible\`: Clearly state the primary reason(s) for ineligibility.
-- \`improvement_suggestions\`: Provide concrete, actionable suggestions for the farmer to meet the criteria in the future.
-- \`alternate_scheme_suggestions\`: If applicable, suggest other schemes from the provided list that are a better fit.
-
-Farmer's Profile:
+**Farmer's Profile:**
 - Land Size: {{{farmerProfile.landSize}}} acres
 - Farmer Category: {{{farmerProfile.farmerCategory}}}
 - Location: State - {{{farmerProfile.location.state}}}, District - {{{farmerProfile.location.district}}}
@@ -98,19 +112,73 @@ Farmer's Profile:
 - Irrigation Type: {{{farmerProfile.irrigationType}}}
 - Annual Income: {{{farmerProfile.annualIncome}}}
 
-Available Government Schemes:
+**Available Government Schemes for {{{farmerProfile.location.state}}}:**
 {{#each schemes}}
 ---
-Scheme Name: {{{this.name}}}
-Benefits: {{{this.benefits}}}
-Eligibility Criteria: {{{this.eligibilityCriteria}}}
-Application Guide Link: {{{this.applicationGuideLink}}}
+- Scheme Name: {{{this.name}}}
+- Category: {{{this.scheme_category}}}
+- Base Subsidy: {{{this.base_subsidy_amount}}}
+- Benefits: {{{this.benefits}}}
+- Eligibility Rules: {{{this.eligibilityCriteria}}}
+- Official Link: {{{this.applicationGuideLink}}}
 {{/each}}
 
-Analyze the farmer's profile against each scheme. Return a list of all relevant schemes (direct and possible matches), sorted from the highest \`semantic_similarity_score\` to the lowest. Also, identify any "near-miss" schemes and provide suggestions as described. If no schemes are relevant, return empty arrays for both matchedSchemes and nearMisses.`
+**RULEBOOK: You MUST follow these steps in order.**
+
+**STEP 1: Filter by Core Eligibility**
+- **Income Filtering:**
+  - If income > ₹5,00,000, the farmer is ONLY eligible for schemes in categories like 'Export Promotion Support', 'Machinery Purchase Subsidy', and 'Storage Infrastructure Aid'. Discard all other schemes for this farmer.
+  - Schemes in the 'Small Land Holding Bonus Scheme' or 'Women Farmer Support Scheme' categories are generally for income < ₹2,50,000.
+- **Semantic Crop Matching:** Analyze the farmer's \`cropType\`. Match it against the \`Eligibility Rules\` of each scheme. Use semantic understanding (e.g., 'paddy' is 'rice', 'groundnut' is a type of 'oilseed'). Handle spelling mistakes. A scheme is a potential match if the farmer's crop is mentioned, implied, or belongs to a category of crops mentioned.
+
+**STEP 2: Calculate Eligibility Score & Adjusted Subsidy**
+For each potentially matched scheme from STEP 1, calculate the following:
+
+- **Land Size Adjustment (on Base Subsidy):**
+  - Small Farmer (0-2 acres): Increase base subsidy by 20%. They get higher priority.
+  - Medium Farmer (2-5 acres): Use standard base subsidy.
+  - Large Farmer (5+ acres): Decrease base subsidy by 15%.
+- **Final Adjusted Subsidy:** This is the \`base_subsidy_amount\` after applying the Land Size Adjustment. Format it as a currency string '₹X,XXX'.
+- **Eligibility Score (0-100):**
+  - Start with a base score of 60 for any match from STEP 1.
+  - **Crop relevance:** +20 for a direct, exact crop match. +10 for a strong semantic match.
+  - **Income priority:** +10 if income is < ₹1,00,000 and the scheme is a support/subsidy type.
+  - **Land size priority:** +10 if the farmer's category is 'Small and Marginal' and the scheme is a 'Small Land Holding Bonus Scheme' or similar.
+  - **Irrigation Bonus:** +20 for 'Rainfed' farmers for schemes like 'Rainfed Farming Support' or 'Irrigation Equipment Subsidy'. +10 for 'Well' or 'Canal' farmers for 'High Yield Crop Incentive' schemes.
+  - Cap the total score at 100.
+
+**STEP 3: Rank and Select Top Schemes**
+- Discard any scheme with a final \`eligibility_score\` below 55.
+- Rank the remaining schemes from highest score to lowest.
+- Select the top 5-7 schemes to present to the user.
+
+**STEP 4: Handle "No Match" Scenario (CRITICAL)**
+- **If, after all filtering, the list of eligible schemes is empty, you MUST NOT return an empty array.**
+- **First Fallback:** Find the most relevant *National Scheme* from the provided list (PM-KISAN, PMFBY, KCC). Pick the one that best fits the farmer's general profile.
+- **Second Fallback:** If even national schemes seem irrelevant, return the "Universal Farmer Development Scheme".
+- When using a fallback, generate a single entry. Set \`eligibility_score\` to 50, calculate a basic \`adjusted_subsidy_amount\`, and write an \`explanation\` that clearly states this is a generally available scheme because no specific matches were found.
+
+**STEP 5: Generate Final Output Structure**
+For each of the final selected schemes (including fallbacks), create an object with:
+- \`scheme_name\`: The scheme's name.
+- \`adjusted_subsidy_amount\`: The final calculated and formatted subsidy.
+- \`eligibility_score\`: The final score (0-100).
+- \`scheme_category\`: The scheme's category.
+- \`benefits\`: The original benefits text.
+- \`eligibilityCriteria\`: The original eligibility criteria text.
+- \`applicationGuideLink\`: The original link, if it exists.
+- \`explanation\`: A **personalized** explanation. Example: "As a farmer in Maharashtra with 2 acres of land growing Soybean, you are a strong candidate for this scheme. The subsidy has been adjusted for your small land holding, giving you a higher benefit."
+
+**STEP 6: Analyze Near Misses**
+- From the schemes you discarded in STEP 1 or 2, identify 1-2 "near-misses".
+- A near-miss is where the farmer fails only one major criterion (e.g., income is slightly too high, land is just over the limit, wrong irrigation type).
+- For each near-miss, provide \`reason_not_eligible\`, \`improvement_suggestions\`, and \`alternate_scheme_suggestions\`.
+
+You are the entire backend. Be precise, logical, and always provide a result.
+`
 });
 
-// Define the Genkit flow
+// Define the Genkit flow that orchestrates the tool and the prompt
 const farmerSchemeEligibilityAnalyzerFlow = ai.defineFlow(
   {
     name: 'farmerSchemeEligibilityAnalyzerFlow',
@@ -118,10 +186,10 @@ const farmerSchemeEligibilityAnalyzerFlow = ai.defineFlow(
     outputSchema: SchemeAnalysisOutputSchema,
   },
   async (input) => {
-    // Call the tool to get the list of government schemes
-    const schemes = await getGovernmentSchemes({}); // Pass empty object as input to the tool
+    // Call the tool to dynamically generate the list of schemes for the farmer's state.
+    const schemes = await getGovernmentSchemes({ state: input.location.state });
 
-    // Pass farmer's profile and schemes to the prompt
+    // Pass the farmer's profile and the generated schemes to the powerful AI prompt.
     const { output } = await farmerSchemeEligibilityPrompt({
       farmerProfile: input,
       schemes: schemes,
@@ -130,7 +198,7 @@ const farmerSchemeEligibilityAnalyzerFlow = ai.defineFlow(
   }
 );
 
-// Exported wrapper function
+// Exported wrapper function for the Next.js server action
 export async function analyzeFarmerSchemeEligibility(
   input: FarmerProfileInput
 ): Promise<SchemeAnalysisOutput> {

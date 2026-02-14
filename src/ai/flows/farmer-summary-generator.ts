@@ -51,12 +51,12 @@ const prompt = ai.definePrompt({
 - Annual Income: {{{farmerProfile.annualIncome}}}
 
 **Scheme Analysis Results:**
-- Matched Schemes: {{analysisResults.matchedSchemes.length}}
+- Matched Schemes: {{analysisResults.eligible_schemes.length}}
 - Near Misses: {{analysisResults.nearMisses.length}}
 
 **Instructions:**
-1.  **Total Schemes Found:** Calculate the total number of schemes in \`analysisResults.matchedSchemes\`.
-2.  **Total Estimated Benefit:** Analyze the \`benefits\` field of each scheme in \`analysisResults.matchedSchemes\`. Synthesize this into a compelling summary of the overall potential benefits. Do not just list them; describe the value (e.g., "significant financial protection through crop insurance, easier access to credit for farm improvements, and direct income support to stabilize your finances.").
+1.  **Total Schemes Found:** Calculate the total number of schemes in \`analysisResults.eligible_schemes\`.
+2.  **Total Estimated Benefit:** Analyze the \`benefits\` field of each scheme in \`analysisResults.eligible_schemes\`. Synthesize this into a compelling summary of the overall potential benefits. Do not just list them; describe the value (e.g., "significant financial protection through crop insurance, easier access to credit for farm improvements, and direct income support to stabilize your finances.").
 3.  **Immediate Action Steps:** Identify the top 2-3 most impactful or easiest-to-apply-for schemes from the matched list. Create a short, actionable list of next steps. For example: "1. Prioritize applying for PM-KISAN for direct income support. 2. Secure your crops by enrolling in PMFBY before the deadline."
 4.  **Long-Term Growth Suggestions:** Review the \`nearMisses\` array in the \`analysisResults\`. Use the \`improvement_suggestions\` to create a forward-looking list of strategic recommendations for the farmer's growth. For example: "Explore forming a Farmer Producer Organization (FPO) to unlock group benefits" or "Consider adopting drip irrigation to qualify for water conservation subsidies." If there are no near misses, provide general growth advice.
 5.  **Motivational Summary:** Write a powerful, concise closing statement that inspires confidence and encourages the farmer to take action. It should make them feel positive about their future.
