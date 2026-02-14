@@ -1,0 +1,154 @@
+/**
+ * This Firestore Security Ruleset is designed for a farmer subsidy application.
+ *
+ * Core Philosophy:
+ * The security model enforces a strict user-ownership paradigm. All data created
+ * by a user is private and accessible only to that user. Publicly-viewable data
+ * is stored separately and is read-only for all users, preventing any modification
+ * from the client-side.
+ *
+ * Data Structure:
+ * All user-specific data, including Farmer Profiles and Uploaded Documents, is
+ * hierarchically nested under a path unique to that user: `/users/{userId}/...`.
+ * This structure inherently partitions user data for security and query performance.
+ * Global data, like government schemes, resides in a top-level collection.
+ *
+ * Key Security Decisions:
+ * - User Isolation: Users can only access their own data tree. They cannot read,
+ *   list, or write to another user's data. There is no functionality for listing users.
+ * - Public Data is Read-Only: The `/government_schemes` collection is readable by any
+ *   authenticated user but is not writable from the client. This data is presumed
+ *   to be managed by administrators via a trusted backend environment.
+ * - Path and Data Consistency: To ensure integrity, rules enforce that the document ID
+ *   for a user's profile or documents must match the user's Auth UID from the path.
+ *   Furthermore, a corresponding `id` field within the document must also match the UID,
+ *   making ownership explicit and immutable.
+ *
+ * Denormalization for Authorization:
+ * This ruleset relies on denormalization to be fast and secure. Instead of using `get()`
+ * calls to check parent documents for ownership, ownership is established directly
+ * through the request path (`/users/{userId}/...`) and a denormalized `id` field
+ * (`id: userId`) stored within each user-specific document. This makes authorization
+ * checks self-contained, performant, and cost-effective.
+ *
+ * Structural Segregation:
+ * Private user data (`farmer_profile`, `uploaded_documents`) is structurally
+ * segregated into user-specific subcollections. Public data (`government_schemes`)
+ * is in its own top-level collection. This clear separation prevents accidental
+ * data exposure and simplifies rules logic for list operations.
+ */
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --------------------------------------------------------------------
+    // Helper Functions
+    // --------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the provided userId.
+     * This is the fundamental check for resource ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Ensures an operation is performed by the owner on an existing document.
+     * Crucial for preventing modification or deletion of non-existent data.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * Validates that the internal 'id' field, which represents the owner's UID,
+     * is correctly set during document creation and matches the user's auth UID.
+     */
+    function hasValidCreationId(userId) {
+      return request.resource.data.id == userId;
+    }
+
+    /**
+     * Validates that the internal 'id' field is immutable during an update.
+     * This prevents re-assigning ownership of a document.
+     */
+    function hasImmutableId() {
+      return request.resource.data.id == resource.data.id;
+    }
+
+
+    // --------------------------------------------------------------------
+    // User Data Collections
+    // --------------------------------------------------------------------
+
+    match /users/{userId} {
+      /**
+       * @description Prevents direct access to the parent user document.
+       * @path        /users/{userId}
+       * @allow       No operations are permitted.
+       * @deny        A user trying to read or write their own /users/{userId} document.
+       * @principle   Enforces that all data access must occur through specified subcollections, preventing reads of a potentially empty or non-existent parent document.
+       */
+      allow read, write: if false;
+
+      /**
+       * @description Secures a farmer's profile data, allowing only the owner to access and manage it.
+       * @path        /users/{userId}/farmer_profile/{farmerProfileId}
+       * @allow       (create) A signed-in user (auth.uid: 'user123') creating their own profile at /users/user123/farmer_profile/user123.
+       * @deny        (update) A user ('user456') trying to update a profile at /users/user123/farmer_profile/user123.
+       * @principle   Restricts access to a user's own data tree and validates relational integrity between the path, document ID, and internal document data.
+       */
+      match /farmer_profile/{farmerProfileId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && farmerProfileId == userId && hasValidCreationId(userId);
+        allow update: if isExistingOwner(userId) && farmerProfileId == userId && hasImmutableId();
+        allow delete: if isExistingOwner(userId) && farmerProfileId == userId;
+      }
+
+      /**
+       * @description Secures a farmer's uploaded document metadata, accessible only by the owner.
+       * @path        /users/{userId}/uploaded_documents/{uploadedDocumentId}
+       * @allow       (get) A signed-in user (auth.uid: 'user123') reading their document metadata at /users/user123/uploaded_documents/user123.
+       * @deny        (create) A user creating a document where the document ID does not match their user ID, e.g., /users/user123/uploaded_documents/otherId.
+       * @principle   Enforces strict document ownership and validates that the document's path and internal ID consistently reference the owner.
+       */
+      match /uploaded_documents/{uploadedDocumentId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && uploadedDocumentId == userId && hasValidCreationId(userId);
+        allow update: if isExistingOwner(userId) && uploadedDocumentId == userId && hasImmutableId();
+        allow delete: if isExistingOwner(userId) && uploadedDocumentId == userId;
+      }
+    }
+
+
+    // --------------------------------------------------------------------
+    // Public Data Collections
+    // --------------------------------------------------------------------
+
+    /**
+     * @description Allows any authenticated user to read government scheme information, but prevents any client-side modifications.
+     * @path        /government_schemes/{schemeId}
+     * @allow       (list) Any signed-in user listing all documents in the 'government_schemes' collection.
+     * @deny        (create) Any user attempting to create a new government scheme document.
+     * @principle   Provides public read access while protecting data integrity by disallowing all write operations from clients. Data is managed by a trusted backend.
+     */
+    match /government_schemes/{schemeId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

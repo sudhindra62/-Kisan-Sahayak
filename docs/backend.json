@@ -1,0 +1,234 @@
+{
+  "entities": {
+    "FarmerProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FarmerProfile",
+      "type": "object",
+      "description": "Stores the core profile information of a farmer, used for scheme eligibility analysis.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the FarmerProfile entity."
+        },
+        "landSize": {
+          "type": "number",
+          "description": "The total size of the farmer's land, typically measured in acres or hectares."
+        },
+        "state": {
+          "type": "string",
+          "description": "The state where the farmer's land is located."
+        },
+        "district": {
+          "type": "string",
+          "description": "The district within the state where the farmer's land is located."
+        },
+        "cropType": {
+          "type": "string",
+          "description": "The primary type of crop cultivated by the farmer."
+        },
+        "irrigationType": {
+          "type": "string",
+          "description": "The method of irrigation used by the farmer (e.g., borewell, canal, rain-fed)."
+        },
+        "annualIncome": {
+          "type": "number",
+          "description": "The farmer's estimated annual income."
+        },
+        "documentSetId": {
+          "type": "string",
+          "description": "Reference to the UploadedDocument entity, containing metadata about the farmer's uploaded documents. (Relationship: FarmerProfile 1:1 UploadedDocument)"
+        }
+      },
+      "required": [
+        "id",
+        "landSize",
+        "state",
+        "district",
+        "cropType",
+        "irrigationType",
+        "annualIncome",
+        "documentSetId"
+      ]
+    },
+    "UploadedDocument": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UploadedDocument",
+      "type": "object",
+      "description": "Stores metadata and URLs for documents uploaded by a farmer, used for verification and scheme application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this set of uploaded documents. This ID also serves as a reference to the associated FarmerProfile (FarmerProfile.id = UploadedDocument.id)."
+        },
+        "landProofUrl": {
+          "type": "string",
+          "description": "URL to the farmer's land ownership proof document stored in Firebase Storage.",
+          "format": "uri"
+        },
+        "incomeCertificateUrl": {
+          "type": "string",
+          "description": "URL to the farmer's income certificate document stored in Firebase Storage.",
+          "format": "uri"
+        },
+        "cropProofUrl": {
+          "type": "string",
+          "description": "URL to the farmer's crop registration proof document stored in Firebase Storage.",
+          "format": "uri"
+        },
+        "bankPassbookUrl": {
+          "type": "string",
+          "description": "Optional URL to the farmer's bank passbook copy document stored in Firebase Storage.",
+          "format": "uri"
+        },
+        "identityProofUrl": {
+          "type": "string",
+          "description": "Optional URL to the farmer's identity proof document stored in Firebase Storage.",
+          "format": "uri"
+        },
+        "uploadTimestamp": {
+          "type": "string",
+          "description": "Timestamp indicating when these documents were last uploaded or updated.",
+          "format": "date-time"
+        },
+        "verificationStatus": {
+          "type": "string",
+          "description": "The current verification status of the uploaded documents by the AI system (e.g., Pending, Verified, Mismatch).",
+          "format": "enum",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mismatchDetails": {
+          "type": "string",
+          "description": "Optional details or a summary of any mismatches detected by the AI during document verification."
+        }
+      },
+      "required": [
+        "id",
+        "landProofUrl",
+        "incomeCertificateUrl",
+        "cropProofUrl",
+        "uploadTimestamp",
+        "verificationStatus"
+      ]
+    },
+    "GovernmentScheme": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GovernmentScheme",
+      "type": "object",
+      "description": "Stores information about various government schemes available to farmers.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the GovernmentScheme entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The official name of the government scheme."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the scheme, its purpose, and objectives."
+        },
+        "benefits": {
+          "type": "string",
+          "description": "A summary of the benefits offered by the scheme to eligible farmers."
+        },
+        "eligibilityCriteria": {
+          "type": "string",
+          "description": "A textual representation of the rules and conditions farmers must meet to be eligible for the scheme."
+        },
+        "applicationGuide": {
+          "type": "string",
+          "description": "Step-by-step instructions on how to apply for this specific scheme."
+        },
+        "officialPortalLink": {
+          "type": "string",
+          "description": "The URL to the official government portal or website for applying to this scheme.",
+          "format": "uri"
+        },
+        "requiredDocumentsDescription": {
+          "type": "string",
+          "description": "A description of the documents typically required for applying to this scheme."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "benefits",
+        "eligibilityCriteria",
+        "applicationGuide",
+        "officialPortalLink",
+        "requiredDocumentsDescription"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/farmer_profile/{farmerProfileId}",
+        "definition": {
+          "entityName": "FarmerProfile",
+          "schema": {
+            "$ref": "#/backend/entities/FarmerProfile"
+          },
+          "description": "Stores the core profile information for a specific farmer. This document is owned by the user identified by `userId`. The `farmerProfileId` in the path must match `userId` and the `id` field within the document also matches `userId`. Includes `documentSetId` which refers to the `UploadedDocument` associated with this `userId`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the farmer/user. This corresponds to Firebase Authentication's `uid`."
+            },
+            {
+              "name": "farmerProfileId",
+              "description": "The document ID for the farmer's profile, which must match the `userId` to ensure strict ownership and simplify security rules."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/uploaded_documents/{uploadedDocumentId}",
+        "definition": {
+          "entityName": "UploadedDocument",
+          "schema": {
+            "$ref": "#/backend/entities/UploadedDocument"
+          },
+          "description": "Stores metadata and URLs for documents uploaded by a specific farmer. This document is owned by the user identified by `userId`. The `uploadedDocumentId` in the path must match `userId` and the `id` field within the document also matches `userId`. Includes denormalized 'ownerId' (via 'id' field matching path `userId`) for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the farmer/user. This corresponds to Firebase Authentication's `uid`."
+            },
+            {
+              "name": "uploadedDocumentId",
+              "description": "The document ID for the farmer's uploaded document set, which must match the `userId` to ensure strict ownership and simplify security rules."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/government_schemes/{schemeId}",
+        "definition": {
+          "entityName": "GovernmentScheme",
+          "schema": {
+            "$ref": "#/backend/entities/GovernmentScheme"
+          },
+          "description": "Stores information about various government schemes. This collection is publicly readable by all authenticated users.",
+          "params": [
+            {
+              "name": "schemeId",
+              "description": "The unique identifier for a specific government scheme."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to provide secure, scalable, and easily debuggable authorization rules by strictly adhering to the core design principles. \n\n**Authorization Independence:**\n1.  **User-Owned Data:** All farmer-specific data (`FarmerProfile` and `UploadedDocument`) is placed under a user's unique path: `/users/{userId}/farmer_profile/{userId}` and `/users/{userId}/uploaded_documents/{userId}`. The `userId` in the path (e.g., `request.auth.uid`) directly identifies the owner. \n2.  **Document ID Matching:** For singleton user-owned documents, the document ID within the subcollection (e.g., the second `{userId}` in the path) is explicitly set to match the `userId` in the preceding path segment. This means the rules can simply verify `request.auth.uid == userId` and `resource.id == userId` (where `resource.id` refers to the document ID itself), removing any need for `get()` operations on parent documents to determine ownership. \n3.  **Self-Contained Authorization Context:** Both `FarmerProfile` and `UploadedDocument` entities include an `id` field which also explicitly stores the `userId`. This denormalizes the ownership identifier directly into the document's data, making each document self-sufficient for authorization decisions and eliminating hierarchical dependencies.\n\n**QAPs (Rules are not Filters):**\n1.  **Private User Data:** For `FarmerProfile` and `UploadedDocument`, the `list` operations are inherently secure and efficient. A farmer can only query their own path (e.g., `/users/{request.auth.uid}/farmer_profile`), which directly resolves to their specific, single document. There's no filtering needed in rules for unauthorized data, as only the owner has access to their path. \n2.  **Public Global Data:** The `/government_schemes/{schemeId}` collection holds public data. `list` operations on this collection are intended to return all available schemes to any authenticated user. Since all documents in this collection share the same security posture (read-only for all authenticated users), no filtering is required in the rules, satisfying the QAP principle.\n\n**Structural Segregation:**\n*   User-specific profiles (`/users/{userId}/farmer_profile`) and their document metadata (`/users/{userId}/uploaded_documents`) are segregated into distinct subcollections, even though they relate to the same user. This prevents mixing different types of data with potentially varying access patterns within the same collection. \n*   Global, public data (`/government_schemes`) is kept in a top-level collection, completely separate from private user data.\n\n**Access Modeling:**\n*   **Private Data:** The path-based ownership (`/users/{userId}/...`) is consistently used for `FarmerProfile` and `UploadedDocument`. \n*   **DBAC:** All authorization will be based on `request.auth.uid` matching the `userId` in the path and/or the `id` field within the document. No custom claims are needed for basic user data access. \n\nThis design ensures simple and robust Firestore security rules, simplifies debugging, and adheres to principles for scalable and maintainable applications."
+  }
+}
