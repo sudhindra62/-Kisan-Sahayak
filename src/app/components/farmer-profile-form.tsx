@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { FarmerProfileInput } from "@/ai/flows/farmer-scheme-eligibility-analyzer";
+import { IndianRupee } from "lucide-react";
 
 // Zod schema to match the logic from the AI flow.
 const formSchema = z.object({
@@ -47,7 +48,7 @@ export default function FarmerProfileForm({ onSubmit, isLoading }: FarmerProfile
             </div>
 
             <div className="input-group">
-                <label>Annual Income</label>
+                <label>Annual Income (in <IndianRupee className="inline h-4 w-4" />)</label>
                 <input type="number" placeholder="e.g., 50000" {...form.register("annualIncome")} />
                 {form.formState.errors.annualIncome && <p className="error-message">{form.formState.errors.annualIncome.message}</p>}
             </div>
