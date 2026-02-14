@@ -157,6 +157,43 @@
         "officialPortalLink",
         "requiredDocumentsDescription"
       ]
+    },
+    "ChatHistory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChatHistory",
+      "type": "object",
+      "description": "Stores the entire conversation history for a single user's chatbot session.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The user's unique ID, linking this chat history to the user."
+        },
+        "messages": {
+          "type": "array",
+          "description": "An ordered array of chat messages between the user and the AI assistant.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "enum": ["user", "model"],
+                "description": "The role of the message author, either 'user' or 'model' (AI assistant)."
+              },
+              "content": {
+                "type": "string",
+                "description": "The text content of the chat message."
+              }
+            },
+            "required": ["role", "content"]
+          }
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the last message in the conversation."
+        }
+      },
+      "required": ["id", "messages", "updatedAt"]
     }
   },
   "auth": {
@@ -222,9 +259,30 @@
             }
           ]
         }
+      },
+      {
+        "path": "/users/{userId}/chat_history/{chatId}",
+        "definition": {
+          "entityName": "ChatHistory",
+          "schema": {
+            "$ref": "#/backend/entities/ChatHistory"
+          },
+          "description": "Stores the conversation history for a user's chatbot session. The `chatId` must match the `userId` to ensure each user has one primary conversation document.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the farmer/user. This corresponds to Firebase Authentication's `uid`."
+            },
+            {
+              "name": "chatId",
+              "description": "The document ID for the chat history, which must match the `userId`."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to provide secure, scalable, and easily debuggable authorization rules by strictly adhering to the core design principles. \n\n**Authorization Independence:**\n1.  **User-Owned Data:** All farmer-specific data (`FarmerProfile` and `UploadedDocument`) is placed under a user's unique path: `/users/{userId}/farmer_profile/{userId}` and `/users/{userId}/uploaded_documents/{userId}`. The `userId` in the path (e.g., `request.auth.uid`) directly identifies the owner. \n2.  **Document ID Matching:** For singleton user-owned documents, the document ID within the subcollection (e.g., the second `{userId}` in the path) is explicitly set to match the `userId` in the preceding path segment. This means the rules can simply verify `request.auth.uid == userId` and `resource.id == userId` (where `resource.id` refers to the document ID itself), removing any need for `get()` operations on parent documents to determine ownership. \n3.  **Self-Contained Authorization Context:** Both `FarmerProfile` and `UploadedDocument` entities include an `id` field which also explicitly stores the `userId`. This denormalizes the ownership identifier directly into the document's data, making each document self-sufficient for authorization decisions and eliminating hierarchical dependencies.\n\n**QAPs (Rules are not Filters):**\n1.  **Private User Data:** For `FarmerProfile` and `UploadedDocument`, the `list` operations are inherently secure and efficient. A farmer can only query their own path (e.g., `/users/{request.auth.uid}/farmer_profile`), which directly resolves to their specific, single document. There's no filtering needed in rules for unauthorized data, as only the owner has access to their path. \n2.  **Public Global Data:** The `/government_schemes/{schemeId}` collection holds public data. `list` operations on this collection are intended to return all available schemes to any authenticated user. Since all documents in this collection share the same security posture (read-only for all authenticated users), no filtering is required in the rules, satisfying the QAP principle.\n\n**Structural Segregation:**\n*   User-specific profiles (`/users/{userId}/farmer_profile`) and their document metadata (`/users/{userId}/uploaded_documents`) are segregated into distinct subcollections, even though they relate to the same user. This prevents mixing different types of data with potentially varying access patterns within the same collection. \n*   Global, public data (`/government_schemes`) is kept in a top-level collection, completely separate from private user data.\n\n**Access Modeling:**\n*   **Private Data:** The path-based ownership (`/users/{userId}/...`) is consistently used for `FarmerProfile` and `UploadedDocument`. \n*   **DBAC:** All authorization will be based on `request.auth.uid` matching the `userId` in the path and/or the `id` field within the document. No custom claims are needed for basic user data access. \n\nThis design ensures simple and robust Firestore security rules, simplifies debugging, and adheres to principles for scalable and maintainable applications."
+    "reasoning": "The Firestore structure is designed to provide secure, scalable, and easily debuggable authorization rules by strictly adhering to the core design principles. \n\n**Authorization Independence:**\n1.  **User-Owned Data:** All farmer-specific data (`FarmerProfile`, `UploadedDocument`, `ChatHistory`) is placed under a user's unique path: `/users/{userId}/...`. The `userId` in the path (e.g., `request.auth.uid`) directly identifies the owner. \n2.  **Document ID Matching:** For singleton user-owned documents (profile, docs, chat), the document ID within the subcollection is explicitly set to match the `userId` in the preceding path segment. This means the rules can simply verify `request.auth.uid == userId` and `resource.id == userId`, removing any need for `get()` operations on parent documents to determine ownership. \n3.  **Self-Contained Authorization Context:** All entities include an `id` field which also explicitly stores the `userId`. This denormalizes the ownership identifier directly into the document's data, making each document self-sufficient for authorization decisions.\n\n**QAPs (Rules are not Filters):**\n1.  **Private User Data:** For all user-owned collections, `list` operations are inherently secure and efficient. A farmer can only query their own path (e.g., `/users/{request.auth.uid}/farmer_profile`), which directly resolves to their specific, single document. No filtering is needed in rules.\n2.  **Public Global Data:** The `/government_schemes/{schemeId}` collection holds public data. `list` operations on this collection are intended to return all available schemes to any authenticated user, requiring no filtering.\n\n**Structural Segregation:**\n*   User-specific data types (`farmer_profile`, `uploaded_documents`, `chat_history`) are segregated into distinct subcollections. \n*   Global, public data (`/government_schemes`) is kept in a top-level collection, completely separate from private user data.\n\n**Access Modeling:**\n*   **Private Data:** The path-based ownership (`/users/{userId}/...`) is consistently used. \n*   **DBAC:** All authorization will be based on `request.auth.uid` matching the `userId` in the path and/or the `id` field within the document."
   }
 }
+    
     

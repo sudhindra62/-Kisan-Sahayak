@@ -81,3 +81,17 @@ export const PredictedSchemeSchema = z.object({
 export const PredictiveAnalysisOutputSchema = z.object({
   predictions: z.array(PredictedSchemeSchema).describe('A list of predicted scheme categories that may become relevant in the next 6 months.'),
 });
+
+// Schemas for Chatbot
+export const ChatMessageSchema = z.object({
+  role: z.enum(['user', 'model']),
+  content: z.string(),
+});
+export type ChatMessage = z.infer<typeof ChatMessageSchema>;
+
+export const ChatbotInputSchema = z.object({
+    farmerProfile: FarmerProfileInputSchema.describe("The farmer's detailed profile."),
+    history: z.array(ChatMessageSchema).describe('The history of the conversation so far.'),
+    message: z.string().describe('The latest message from the user.'),
+});
+export type ChatbotInput = z.infer<typeof ChatbotInputSchema>;

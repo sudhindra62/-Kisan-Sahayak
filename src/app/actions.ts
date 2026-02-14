@@ -24,6 +24,8 @@ import {
     predictUpcomingSchemes,
     type PredictiveAnalysisOutput,
 } from "@/ai/flows/predictive-scheme-analyzer";
+import { getChatbotResponse as getChatbotResponseFlow } from "@/ai/flows/farmer-assistant-chat";
+import type { ChatbotInput } from "@/ai/schemas";
 
 export async function getEligibleSchemes(
   data: FarmerProfileInput
@@ -82,5 +84,15 @@ export async function getPredictedSchemes(
     } catch (error) {
         console.error("Error in getPredictedSchemes server action:", error);
         throw new Error("Failed to generate scheme predictions.");
+    }
+}
+
+export async function getChatbotResponse(data: ChatbotInput): Promise<string> {
+    try {
+        const result = await getChatbotResponseFlow(data);
+        return result;
+    } catch (error) {
+        console.error("Error in getChatbotResponse server action:", error);
+        throw new Error("Failed to get response from AI assistant.");
     }
 }

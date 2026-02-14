@@ -8,8 +8,8 @@
  * from the client-side.
  *
  * Data Structure:
- * All user-specific data, including Farmer Profiles and Uploaded Documents, is
- * hierarchically nested under a path unique to that user: `/users/{userId}/...`.
+ * All user-specific data, including Farmer Profiles, Uploaded Documents, and Chat History,
+ * is hierarchically nested under a path unique to that user: `/users/{userId}/...`.
  * This structure inherently partitions user data for security and query performance.
  * Global data, like government schemes, resides in a top-level collection.
  *
@@ -20,7 +20,7 @@
  *   authenticated user but is not writable from the client. This data is presumed
  *   to be managed by administrators via a trusted backend environment.
  * - Path and Data Consistency: To ensure integrity, rules enforce that the document ID
- *   for a user's profile or documents must match the user's Auth UID from the path.
+ *   for a user's data must match the user's Auth UID from the path.
  *   Furthermore, a corresponding `id` field within the document must also match the UID,
  *   making ownership explicit and immutable.
  *
@@ -32,7 +32,7 @@
  * checks self-contained, performant, and cost-effective.
  *
  * Structural Segregation:
- * Private user data (`farmer_profile`, `uploaded_documents`) is structurally
+ * Private user data (`farmer_profile`, `uploaded_documents`, `chat_history`) is structurally
  * segregated into user-specific subcollections. Public data (`government_schemes`)
  * is in its own top-level collection. This clear separation prevents accidental
  * data exposure and simplifies rules logic for list operations.
@@ -93,19 +93,11 @@ service cloud.firestore {
     match /users/{userId} {
       /**
        * @description Prevents direct access to the parent user document.
-       * @path        /users/{userId}
-       * @allow       No operations are permitted.
-       * @deny        A user trying to read or write their own /users/{userId} document.
-       * @principle   Enforces that all data access must occur through specified subcollections, preventing reads of a potentially empty or non-existent parent document.
        */
       allow read, write: if false;
 
       /**
        * @description Secures a farmer's profile data, allowing only the owner to access and manage it.
-       * @path        /users/{userId}/farmer_profile/{farmerProfileId}
-       * @allow       (create) A signed-in user (auth.uid: 'user123') creating their own profile at /users/user123/farmer_profile/user123.
-       * @deny        (update) A user ('user456') trying to update a profile at /users/user123/farmer_profile/user123.
-       * @principle   Restricts access to a user's own data tree and validates relational integrity between the path, document ID, and internal document data.
        */
       match /farmer_profile/{farmerProfileId} {
         allow get: if isOwner(userId);
@@ -117,10 +109,6 @@ service cloud.firestore {
 
       /**
        * @description Secures a farmer's uploaded document metadata, accessible only by the owner.
-       * @path        /users/{userId}/uploaded_documents/{uploadedDocumentId}
-       * @allow       (get) A signed-in user (auth.uid: 'user123') reading their document metadata at /users/user123/uploaded_documents/user123.
-       * @deny        (create) A user creating a document where the document ID does not match their user ID, e.g., /users/user123/uploaded_documents/otherId.
-       * @principle   Enforces strict document ownership and validates that the document's path and internal ID consistently reference the owner.
        */
       match /uploaded_documents/{uploadedDocumentId} {
         allow get: if isOwner(userId);
@@ -128,6 +116,16 @@ service cloud.firestore {
         allow create: if isOwner(userId) && uploadedDocumentId == userId && hasValidCreationId(userId);
         allow update: if isExistingOwner(userId) && uploadedDocumentId == userId && hasImmutableId();
         allow delete: if isExistingOwner(userId) && uploadedDocumentId == userId;
+      }
+      
+      /**
+       * @description Secures a user's chat history, allowing only the owner to access and manage it.
+       */
+      match /chat_history/{chatId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && chatId == userId && hasValidCreationId(userId);
+        allow update: if isExistingOwner(userId) && chatId == userId && hasImmutableId();
+        allow delete: if isExistingOwner(userId) && chatId == userId;
       }
     }
 
@@ -138,10 +136,6 @@ service cloud.firestore {
 
     /**
      * @description Allows any authenticated user to read government scheme information, but prevents any client-side modifications.
-     * @path        /government_schemes/{schemeId}
-     * @allow       (list) Any signed-in user listing all documents in the 'government_schemes' collection.
-     * @deny        (create) Any user attempting to create a new government scheme document.
-     * @principle   Provides public read access while protecting data integrity by disallowing all write operations from clients. Data is managed by a trusted backend.
      */
     match /government_schemes/{schemeId} {
       allow get: if isSignedIn();
@@ -152,3 +146,4 @@ service cloud.firestore {
     }
   }
 }
+    

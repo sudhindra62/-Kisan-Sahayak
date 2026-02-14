@@ -13,6 +13,7 @@ import type { PredictiveAnalysisOutput } from "@/ai/flows/predictive-scheme-anal
 import PredictiveAnalysis from "@/app/components/predictive-analysis";
 import { useAuth, useFirestore, useUser, initiateAnonymousSignIn, setDocumentNonBlocking } from "@/firebase";
 import { doc } from "firebase/firestore";
+import Chatbot from "@/app/components/chatbot/Chatbot";
 
 type DocumentsState = {
   landProofUrl?: string;
@@ -147,6 +148,7 @@ export default function Home() {
     <main>
         <div className="center-blend"></div>
         <div className="center-glow"></div>
+        <Chatbot farmerProfile={farmerProfile} userId={user?.uid} />
         <div className="form-container">
             <h1>KisanSahayak AI</h1>
             <p>
