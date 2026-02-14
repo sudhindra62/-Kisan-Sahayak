@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
-import { ArrowLeft, ArrowUp, Bot } from 'lucide-react';
+import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { ArrowLeft, ArrowUp, Bot, WifiOff } from 'lucide-react';
 import type { ChatMessage, FarmerProfileInput } from '@/ai/schemas';
 import { getChatbotResponse } from '@/app/actions';
 import ChatMessageDisplay from './ChatMessage';
@@ -14,23 +14,50 @@ type ChatWindowProps = {
   userId: string;
 };
 
-const initialMessages: ChatMessage[] = [
-    { role: 'model', content: 'Hello! I am your KisanSahayak AI assistant. How can I help you today?' },
-];
+const initialMessage: ChatMessage = { role: 'model', content: 'Hello! I am your KisanSahayak AI assistant. How can I help you today?' };
 
 export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([initialMessage]);
   const [isSending, setIsSending] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
   const chatBodyRef = useRef<HTMLDivElement>(null);
   
   const firestore = useFirestore();
+
+  // Effect to track online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
+      setIsOnline(navigator.onLine);
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+    }
+    
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      }
+    };
+  }, []);
 
   const chatHistoryRef = useMemoFirebase(() => 
     firestore ? doc(firestore, 'users', userId, 'chat_history', userId) : null
   , [firestore, userId]);
   
-  const { data: chatHistoryDoc, isLoading: isHistoryLoading } = useDoc<{ messages: ChatMessage[], updatedAt: string }>(chatHistoryRef);
-  const messages = chatHistoryDoc?.messages ?? initialMessages;
+  const { data: chatHistoryDoc, isLoading: isHistoryLoading } = useDoc<{ messages: ChatMessage[] }>(chatHistoryRef);
+  
+  // Effect to sync messages from Firestore
+  useEffect(() => {
+    if (chatHistoryDoc?.messages && chatHistoryDoc.messages.length > 0) {
+      setMessages(chatHistoryDoc.messages);
+    } else {
+      setMessages([initialMessage]);
+    }
+  }, [chatHistoryDoc]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -41,26 +68,31 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isSending) return;
+    if (!input.trim() || isSending || !isOnline) return;
 
-    const newMessage: ChatMessage = { role: 'user', content: input };
-    const newHistory = [...messages, newMessage];
+    const userMessage: ChatMessage = { role: 'user', content: input };
+    const newMessages = [...messages, userMessage];
     
+    setMessages(newMessages); // Optimistically update UI
     setInput('');
     setIsSending(true);
 
     try {
+        // The history sent to the AI should not include the latest user message
+        const historyForAI = messages;
         const aiResponse = await getChatbotResponse({
             farmerProfile,
-            history: messages, // Send history *before* the new message
+            history: historyForAI, 
             message: input,
         });
 
         const aiMessage: ChatMessage = { role: 'model', content: aiResponse };
-        const finalHistory = [...newHistory, aiMessage];
+        
+        const finalHistory = [...newMessages, aiMessage];
+        setMessages(finalHistory); // Update UI with AI response
         
         if (chatHistoryRef) {
-            await setDoc(chatHistoryRef, { 
+            setDocumentNonBlocking(chatHistoryRef, { 
                 id: userId,
                 messages: finalHistory,
                 updatedAt: new Date().toISOString()
@@ -69,19 +101,14 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
 
     } catch (error) {
       console.error("Failed to get chat response:", error);
-       if (chatHistoryRef) {
-            const errorMessage: ChatMessage = { role: 'model', content: 'Sorry, I encountered an error. Please try again.' };
-            const historyWithError = [...newHistory, errorMessage];
-             await setDoc(chatHistoryRef, { 
-                id: userId,
-                messages: historyWithError,
-                updatedAt: new Date().toISOString()
-            }, { merge: true });
-       }
+      const errorMessage: ChatMessage = { role: 'model', content: 'Sorry, I couldn\'t connect to the AI assistant. Please check your internet connection and try again.' };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
         setIsSending(false);
     }
   };
+
+  const isChatDisabled = isSending || isHistoryLoading || !isOnline;
 
   return (
     <div className="chat-page-container">
@@ -90,6 +117,12 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             <ArrowLeft className="h-5 w-5" />
         </Link>
         <h3 className="chat-title">KisanSahayak Assistant</h3>
+        {!isOnline && (
+            <div className="offline-indicator" title="You are offline">
+                <WifiOff className="h-5 w-5" />
+                Offline
+            </div>
+        )}
       </div>
 
       <div className="chat-body" ref={chatBodyRef}>
@@ -122,11 +155,11 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask me anything..."
+            placeholder={!isOnline ? "You are offline. Please reconnect." : "Ask me anything..."}
             className="chat-input"
-            disabled={isSending || isHistoryLoading}
+            disabled={isChatDisabled}
           />
-          <button type="submit" className="chat-send-btn" disabled={!input.trim() || isSending}>
+          <button type="submit" className="chat-send-btn" disabled={!input.trim() || isChatDisabled}>
             <ArrowUp className="h-5 w-5" />
           </button>
         </form>

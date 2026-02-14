@@ -964,6 +964,20 @@ select {
   50% { transform: translateY(-5px); }
 }
 
+.offline-indicator {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
 @media (max-width: 600px) {
   .chatbot-trigger {
     width: 56px;
