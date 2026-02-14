@@ -9,6 +9,7 @@ import '@/ai/flows/farmer-summary-generator.ts';
 import '@/ai/flows/document-readiness-checker.ts';
 import '@/ai/flows/predictive-scheme-analyzer.ts';
 import '@/ai/flows/farmer-assistant-chat.ts';
+import '@/ai/flows/translate-text.ts';
 import '@/ai/database/central-schemes.ts';
 
     

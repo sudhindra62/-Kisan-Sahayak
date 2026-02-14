@@ -883,6 +883,7 @@ select {
   display: flex;
   gap: 12px;
   max-width: 85%;
+  align-items: flex-end;
 }
 .chat-message .avatar {
   width: 36px;
@@ -977,6 +978,41 @@ select {
     font-weight: 500;
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
+
+.message-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+}
+
+.action-spinner {
+    padding: 8px;
+}
+
+.translate-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.translate-btn:hover:not(:disabled) {
+  color: #f5c542;
+  background: rgba(255,255,255,0.1);
+}
+.translate-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
 
 @media (max-width: 600px) {
   .chatbot-trigger {

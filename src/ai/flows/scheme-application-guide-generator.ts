@@ -3,41 +3,15 @@
  * @fileOverview A Genkit flow that generates a personalized step-by-step application guide for a government scheme.
  *
  * - generateSchemeApplicationGuide - A function that handles the guide generation process.
- * - SchemeApplicationGuideInput - The input type for the generateSchemeApplicationGuide function.
- * - SchemeApplicationGuideOutput - The return type for the generateSchemeApplicationGuide function.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-import { FarmerProfileInputSchema } from '@/ai/schemas';
-
-// Input Schema for the guide generator
-const SchemeApplicationGuideInputSchema = z.object({
-  farmerProfile: FarmerProfileInputSchema,
-  scheme: z.object({
-    name: z.string(),
-    benefits: z.string(),
-    eligibilityCriteria: z.string(),
-    applicationGuideLink: z.string().optional(),
-  }),
-});
-export type SchemeApplicationGuideInput = z.infer<typeof SchemeApplicationGuideInputSchema>;
-
-// Output Schema for the generated guide
-const SchemeApplicationGuideOutputSchema = z.object({
-    schemeName: z.string().describe('The name of the government scheme.'),
-    documentsRequired: z.array(z.string()).describe('A list of documents the farmer will likely need to apply.'),
-    applicationSteps: z.array(z.object({
-        step: z.number(),
-        title: z.string(),
-        description: z.string(),
-        isOnline: z.boolean().describe('Whether this step is for an online or offline process.')
-    })).describe('A step-by-step guide for both online and offline application processes.'),
-    estimatedTimeline: z.string().describe('An estimated timeline for scheme approval, from application to receiving benefits.'),
-    commonMistakes: z.array(z.string()).describe('A list of common mistakes to avoid during the application process.'),
-    contactAuthority: z.string().describe('The name and contact details (if available) of the local authority to contact for help.'),
-});
-export type SchemeApplicationGuideOutput = z.infer<typeof SchemeApplicationGuideOutputSchema>;
+import {
+  type SchemeApplicationGuideInput,
+  SchemeApplicationGuideInputSchema,
+  type SchemeApplicationGuideOutput,
+  SchemeApplicationGuideOutputSchema,
+} from '@/ai/schemas';
 
 export async function generateSchemeApplicationGuide(
   input: SchemeApplicationGuideInput

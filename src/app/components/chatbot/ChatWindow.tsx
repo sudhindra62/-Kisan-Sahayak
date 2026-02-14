@@ -5,7 +5,7 @@ import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@
 import { doc } from 'firebase/firestore';
 import { ArrowLeft, ArrowUp, Bot, WifiOff } from 'lucide-react';
 import type { ChatMessage, FarmerProfileInput } from '@/ai/schemas';
-import { getChatbotResponse } from '@/app/actions';
+import { getChatbotResponse, translateText } from '@/app/actions';
 import ChatMessageDisplay from './ChatMessage';
 import Link from 'next/link';
 
@@ -14,14 +14,20 @@ type ChatWindowProps = {
   userId: string;
 };
 
-const initialMessage: ChatMessage = { role: 'model', content: 'Hello! I am your KisanSahayak AI assistant. How can I help you today?' };
+interface DisplayMessage extends ChatMessage {
+  originalContent?: string; // The original English message from the AI
+}
+
+const initialMessage: DisplayMessage = { role: 'model', content: 'Hello! I am your KisanSahayak AI assistant. How can I help you today?' };
+initialMessage.originalContent = initialMessage.content;
 
 export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<ChatMessage[]>([initialMessage]);
+  const [messages, setMessages] = useState<DisplayMessage[]>([initialMessage]);
   const [isSending, setIsSending] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const chatBodyRef = useRef<HTMLDivElement>(null);
+  const [translatingMessageIndex, setTranslatingMessageIndex] = useState<number | null>(null);
   
   const firestore = useFirestore();
 
@@ -53,7 +59,11 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   // Effect to sync messages from Firestore
   useEffect(() => {
     if (chatHistoryDoc?.messages && chatHistoryDoc.messages.length > 0) {
-      setMessages(chatHistoryDoc.messages);
+      const displayMessages: DisplayMessage[] = chatHistoryDoc.messages.map(m => ({
+          ...m,
+          originalContent: m.role === 'model' ? m.content : undefined,
+      }));
+      setMessages(displayMessages);
     } else {
       setMessages([initialMessage]);
     }
@@ -64,49 +74,97 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     if (chatBodyRef.current) {
       chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
     }
-  }, [messages, isSending]);
+  }, [messages, isSending, translatingMessageIndex]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isSending || !isOnline) return;
 
-    const userMessage: ChatMessage = { role: 'user', content: input };
-    const newMessages = [...messages, userMessage];
+    const userMessage: DisplayMessage = { role: 'user', content: input };
+    const newMessages: DisplayMessage[] = [...messages, userMessage];
     
     setMessages(newMessages); // Optimistically update UI
     setInput('');
     setIsSending(true);
 
     try {
-        // The history sent to the AI should not include the latest user message
-        const historyForAI = messages;
+        // The history sent to the AI should be the original English content
+        const historyForAI = messages.map(m => ({
+            role: m.role,
+            content: m.originalContent || m.content,
+        }));
+
         const aiResponse = await getChatbotResponse({
             farmerProfile,
             history: historyForAI, 
             message: input,
         });
 
-        const aiMessage: ChatMessage = { role: 'model', content: aiResponse };
+        const aiMessage: DisplayMessage = { 
+            role: 'model', 
+            content: aiResponse,
+            originalContent: aiResponse // Store original response
+        };
         
-        const finalHistory = [...newMessages, aiMessage];
-        setMessages(finalHistory); // Update UI with AI response
+        const finalMessages = [...newMessages, aiMessage];
+        setMessages(finalMessages); // Update UI with AI response
         
         if (chatHistoryRef) {
+            // Save only the original English content to Firestore
+            const historyToSave = finalMessages.map(m => ({
+                role: m.role,
+                content: m.originalContent || m.content
+            }));
             setDocumentNonBlocking(chatHistoryRef, { 
                 id: userId,
-                messages: finalHistory,
+                messages: historyToSave,
                 updatedAt: new Date().toISOString()
             }, { merge: true });
         }
 
     } catch (error) {
       console.error("Failed to get chat response:", error);
-      const errorMessage: ChatMessage = { role: 'model', content: 'Sorry, I couldn\'t connect to the AI assistant. Please check your internet connection and try again.' };
+      const errorMessage: DisplayMessage = { role: 'model', content: 'Sorry, I couldn\'t connect to the AI assistant. Please check your internet connection and try again.', originalContent: 'Sorry, I couldn\'t connect to the AI assistant. Please check your internet connection and try again.'};
       setMessages(prev => [...prev, errorMessage]);
     } finally {
         setIsSending(false);
     }
   };
+
+  const handleTranslateMessage = async (messageIndex: number, targetLanguage: string) => {
+    const messageToTranslate = messages[messageIndex];
+    if (messageToTranslate.role !== 'model' || !messageToTranslate.originalContent) return;
+
+    if (targetLanguage === 'English') {
+        const updatedMessages = [...messages];
+        updatedMessages[messageIndex] = {
+            ...updatedMessages[messageIndex],
+            content: messageToTranslate.originalContent,
+        };
+        setMessages(updatedMessages);
+        return;
+    }
+
+    setTranslatingMessageIndex(messageIndex);
+    try {
+        const response = await translateText({
+            text: messageToTranslate.originalContent,
+            targetLanguage,
+        });
+
+        const updatedMessages = [...messages];
+        updatedMessages[messageIndex] = {
+            ...updatedMessages[messageIndex],
+            content: response.translatedText,
+        };
+        setMessages(updatedMessages);
+    } catch (error) {
+        console.error("Failed to translate message:", error);
+    } finally {
+        setTranslatingMessageIndex(null);
+    }
+  };
+
 
   const isChatDisabled = isSending || isHistoryLoading || !isOnline;
 
@@ -133,7 +191,12 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             </div>
         )}
         {messages.map((msg, index) => (
-          <ChatMessageDisplay key={index} message={msg} />
+          <ChatMessageDisplay 
+            key={index} 
+            message={msg} 
+            isTranslating={translatingMessageIndex === index}
+            onTranslate={(lang) => handleTranslateMessage(index, lang)}
+          />
         ))}
          {isSending && (
             <div className="chat-message assistant-message is-thinking">

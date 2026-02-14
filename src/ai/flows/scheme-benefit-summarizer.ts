@@ -4,35 +4,15 @@
  * requirements of a government scheme for farmers.
  *
  * - summarizeSchemeBenefits - A function that handles the scheme summarization process.
- * - SchemeBenefitSummarizerInput - The input type for the summarizeSchemeBenefits function.
- * - SchemeBenefitSummarizerOutput - The return type for the summarizeSchemeBenefits function.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-
-const SchemeBenefitSummarizerInputSchema = z.object({
-  schemeName: z.string().describe('The name of the government scheme.'),
-  schemeDescription: z.string().describe('The full description of the scheme.'),
-  eligibilityCriteria: z
-    .string()
-    .describe('The detailed eligibility criteria for the scheme.'),
-});
-export type SchemeBenefitSummarizerInput = z.infer<
-  typeof SchemeBenefitSummarizerInputSchema
->;
-
-const SchemeBenefitSummarizerOutputSchema = z.object({
-  benefitsSummary: z
-    .string()
-    .describe('A concise summary of the scheme\'s key benefits.'),
-  eligibilitySummary: z
-    .string()
-    .describe('A concise summary of the scheme\'s core eligibility requirements.'),
-});
-export type SchemeBenefitSummarizerOutput = z.infer<
-  typeof SchemeBenefitSummarizerOutputSchema
->;
+import {
+  type SchemeBenefitSummarizerInput,
+  SchemeBenefitSummarizerInputSchema,
+  type SchemeBenefitSummarizerOutput,
+  SchemeBenefitSummarizerOutputSchema,
+} from '@/ai/schemas';
 
 export async function summarizeSchemeBenefits(
   input: SchemeBenefitSummarizerInput

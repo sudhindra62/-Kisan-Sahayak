@@ -12,6 +12,7 @@ export const FarmerProfileInputSchema = z.object({
   annualIncome: z.coerce.number().min(0).describe('The farmer\'s annual income in local currency.'),
   farmerCategory: z.enum(['Small and Marginal', 'Medium', 'Large']).describe('The category of the farmer based on landholding size.'),
 });
+export type FarmerProfileInput = z.infer<typeof FarmerProfileInputSchema>;
 
 // Schema for a single government scheme (internal to the tool/prompt)
 export const GovernmentSchemeSchema = z.object({
@@ -32,6 +33,7 @@ export const EligibleSchemeSchema = z.object({
   eligibilityCriteria: z.string().describe('The original, detailed criteria for eligibility used for guide generation.'),
   applicationGuideLink: z.string().optional().describe('Link to the official application guide or portal.'),
 });
+export type EligibleScheme = z.infer<typeof EligibleSchemeSchema>;
 
 // New Schema for Near Misses
 export const NearMissSchemeSchema = z.object({
@@ -52,9 +54,6 @@ export const SchemeAnalysisOutputSchema = z.object({
     ),
   nearMisses: z.array(NearMissSchemeSchema).describe('A list of schemes where the farmer is close to qualifying, with suggestions for improvement.'),
 });
-
-export type FarmerProfileInput = z.infer<typeof FarmerProfileInputSchema>;
-export type EligibleScheme = z.infer<typeof EligibleSchemeSchema>;
 export type SchemeAnalysisOutput = z.infer<typeof SchemeAnalysisOutputSchema>;
 
 
@@ -63,12 +62,15 @@ export const DocumentReadinessInputSchema = z.object({
   userDocuments: z.array(z.string()).describe("A list of documents that the farmer has."),
   matchedSchemes: z.array(EligibleSchemeSchema).describe("The schemes the farmer was matched with."),
 });
+export type DocumentReadinessInput = z.infer<typeof DocumentReadinessInputSchema>;
 
 export const DocumentReadinessOutputSchema = z.object({
   missing_documents: z.array(z.string()).describe("A list of required documents that the farmer is missing."),
   optional_alternatives: z.array(z.string()).describe("Suggestions for alternative documents or guidance on how to obtain the missing ones."),
   readiness_status: z.string().describe("A summary status of the farmer's document readiness (e.g., 'Ready to Apply', 'Missing Key Documents')."),
 });
+export type DocumentReadinessOutput = z.infer<typeof DocumentReadinessOutputSchema>;
+
 
 // Schemas for Predictive Scheme Analyzer
 export const PredictedSchemeSchema = z.object({
@@ -81,6 +83,8 @@ export const PredictedSchemeSchema = z.object({
 export const PredictiveAnalysisOutputSchema = z.object({
   predictions: z.array(PredictedSchemeSchema).describe('A list of predicted scheme categories that may become relevant in the next 6 months.'),
 });
+export type PredictiveAnalysisOutput = z.infer<typeof PredictiveAnalysisOutputSchema>;
+
 
 // Schema for Central Relief Schemes
 export const CentralReliefSchemeSchema = z.object({
@@ -115,3 +119,87 @@ export const ChatbotInputSchema = z.object({
 });
 export type ChatbotInput = z.infer<typeof ChatbotInputSchema>;
 
+
+// Schemas for Farmer Summary Generator
+export const FarmerSummaryInputSchema = z.object({
+  farmerProfile: FarmerProfileInputSchema,
+  analysisResults: SchemeAnalysisOutputSchema,
+});
+export type FarmerSummaryInput = z.infer<typeof FarmerSummaryInputSchema>;
+
+export const FarmerSummaryOutputSchema = z.object({
+  total_schemes_found: z.number().describe('The total count of directly matched and eligible schemes.'),
+  total_estimated_benefit: z.string().describe('A summary of the potential financial benefits from all matched schemes. This should be a descriptive text, not just a number (e.g., "Access to crop insurance, credit facilities, and direct income support.").'),
+  immediate_action_steps: z.array(z.string()).describe('A short, prioritized list of 2-3 immediate actions the farmer should take, like applying for the top-matched scheme.'),
+  long_term_growth_suggestions: z.array(z.string()).describe('Actionable long-term suggestions for growth, often derived from the "near-miss" analysis (e.g., "Consider forming a Self-Help Group to become eligible for...").'),
+  motivational_summary: z.string().describe('A brief, empowering, and motivational closing message for the farmer.'),
+});
+export type FarmerSummaryOutput = z.infer<typeof FarmerSummaryOutputSchema>;
+
+
+// Schemas for Scheme Application Guide Generator
+export const SchemeApplicationGuideInputSchema = z.object({
+  farmerProfile: FarmerProfileInputSchema,
+  scheme: z.object({
+    name: z.string(),
+    benefits: z.string(),
+    eligibilityCriteria: z.string(),
+    applicationGuideLink: z.string().optional(),
+  }),
+});
+export type SchemeApplicationGuideInput = z.infer<typeof SchemeApplicationGuideInputSchema>;
+
+export const SchemeApplicationGuideOutputSchema = z.object({
+    schemeName: z.string().describe('The name of the government scheme.'),
+    documentsRequired: z.array(z.string()).describe('A list of documents the farmer will likely need to apply.'),
+    applicationSteps: z.array(z.object({
+        step: z.number(),
+        title: z.string(),
+        description: z.string(),
+        isOnline: z.boolean().describe('Whether this step is for an online or offline process.')
+    })).describe('A step-by-step guide for both online and offline application processes.'),
+    estimatedTimeline: z.string().describe('An estimated timeline for scheme approval, from application to receiving benefits.'),
+    commonMistakes: z.array(z.string()).describe('A list of common mistakes to avoid during the application process.'),
+    contactAuthority: z.string().describe('The name and contact details (if available) of the local authority to contact for help.'),
+});
+export type SchemeApplicationGuideOutput = z.infer<typeof SchemeApplicationGuideOutputSchema>;
+
+
+// Schemas for Scheme Benefit Summarizer
+export const SchemeBenefitSummarizerInputSchema = z.object({
+  schemeName: z.string().describe('The name of the government scheme.'),
+  schemeDescription: z.string().describe('The full description of the scheme.'),
+  eligibilityCriteria: z
+    .string()
+    .describe('The detailed eligibility criteria for the scheme.'),
+});
+export type SchemeBenefitSummarizerInput = z.infer<
+  typeof SchemeBenefitSummarizerInputSchema
+>;
+
+export const SchemeBenefitSummarizerOutputSchema = z.object({
+  benefitsSummary: z
+    .string()
+    .describe('A concise summary of the scheme\'s key benefits.'),
+  eligibilitySummary: z
+    .string()
+    .describe('A concise summary of the scheme\'s core eligibility requirements.'),
+});
+export type SchemeBenefitSummarizerOutput = z.infer<
+  typeof SchemeBenefitSummarizerOutputSchema
+>;
+
+
+// Schemas for Translation
+export const TranslateTextInputSchema = z.object({
+  text: z.string().describe('The text to be translated.'),
+  targetLanguage: z
+    .string()
+    .describe('The language to translate the text into (e.g., "Hindi", "Kannada").'),
+});
+export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
+
+export const TranslateTextOutputSchema = z.object({
+  translatedText: z.string().describe('The translated text.'),
+});
+export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;

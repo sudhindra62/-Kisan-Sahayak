@@ -2,30 +2,39 @@
 
 import {
   analyzeFarmerSchemeEligibility,
-  type FarmerProfileInput,
-  type SchemeAnalysisOutput,
 } from "@/ai/flows/farmer-scheme-eligibility-analyzer";
 import {
     generateSchemeApplicationGuide,
-    type SchemeApplicationGuideInput,
-    type SchemeApplicationGuideOutput,
 } from "@/ai/flows/scheme-application-guide-generator";
 import {
     generateFarmerSummary,
-    type FarmerSummaryInput,
-    type FarmerSummaryOutput,
 } from "@/ai/flows/farmer-summary-generator";
 import {
     checkDocumentReadiness,
-    type DocumentReadinessInput,
-    type DocumentReadinessOutput,
 } from "@/ai/flows/document-readiness-checker";
 import {
     predictUpcomingSchemes,
-    type PredictiveAnalysisOutput,
 } from "@/ai/flows/predictive-scheme-analyzer";
 import { getChatbotResponse as getChatbotResponseFlow } from "@/ai/flows/farmer-assistant-chat";
-import type { ChatbotInput } from "@/ai/schemas";
+import {
+    translateText as translateTextFlow,
+} from "@/ai/flows/translate-text";
+
+import type {
+    FarmerProfileInput,
+    SchemeAnalysisOutput,
+    SchemeApplicationGuideInput,
+    SchemeApplicationGuideOutput,
+    FarmerSummaryInput,
+    FarmerSummaryOutput,
+    DocumentReadinessInput,
+    DocumentReadinessOutput,
+    PredictiveAnalysisOutput,
+    ChatbotInput,
+    TranslateTextInput,
+    TranslateTextOutput,
+} from "@/ai/schemas";
+
 
 export async function getEligibleSchemes(
   data: FarmerProfileInput
@@ -94,5 +103,15 @@ export async function getChatbotResponse(data: ChatbotInput): Promise<string> {
     } catch (error) {
         console.error("Error in getChatbotResponse server action:", error);
         throw new Error("Failed to get response from AI assistant.");
+    }
+}
+
+export async function translateText(data: TranslateTextInput): Promise<TranslateTextOutput> {
+    try {
+        const result = await translateTextFlow(data);
+        return result;
+    } catch (error) {
+        console.error("Error in translateText server action:", error);
+        throw new Error("Failed to translate text.");
     }
 }

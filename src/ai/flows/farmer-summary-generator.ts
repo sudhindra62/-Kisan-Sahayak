@@ -3,33 +3,15 @@
  * @fileOverview Generates a final summary report for the farmer based on scheme analysis results.
  *
  * - generateFarmerSummary - A function that handles the summary generation.
- * - FarmerSummaryInput - The input type for the generateFarmerSummary function.
- * - FarmerSummaryOutput - The return type for the generateFarmerSummary function.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
 import {
-  FarmerProfileInputSchema,
-  SchemeAnalysisOutputSchema,
+  type FarmerSummaryInput,
+  FarmerSummaryInputSchema,
+  type FarmerSummaryOutput,
+  FarmerSummaryOutputSchema,
 } from '@/ai/schemas';
-
-// Input Schema for the summary generator
-const FarmerSummaryInputSchema = z.object({
-  farmerProfile: FarmerProfileInputSchema,
-  analysisResults: SchemeAnalysisOutputSchema,
-});
-export type FarmerSummaryInput = z.infer<typeof FarmerSummaryInputSchema>;
-
-// Output Schema for the generated summary
-const FarmerSummaryOutputSchema = z.object({
-  total_schemes_found: z.number().describe('The total count of directly matched and eligible schemes.'),
-  total_estimated_benefit: z.string().describe('A summary of the potential financial benefits from all matched schemes. This should be a descriptive text, not just a number (e.g., "Access to crop insurance, credit facilities, and direct income support.").'),
-  immediate_action_steps: z.array(z.string()).describe('A short, prioritized list of 2-3 immediate actions the farmer should take, like applying for the top-matched scheme.'),
-  long_term_growth_suggestions: z.array(z.string()).describe('Actionable long-term suggestions for growth, often derived from the "near-miss" analysis (e.g., "Consider forming a Self-Help Group to become eligible for...").'),
-  motivational_summary: z.string().describe('A brief, empowering, and motivational closing message for the farmer.'),
-});
-export type FarmerSummaryOutput = z.infer<typeof FarmerSummaryOutputSchema>;
 
 export async function generateFarmerSummary(
   input: FarmerSummaryInput
