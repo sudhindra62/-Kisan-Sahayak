@@ -1,24 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { type FarmerProfileInput, type SchemeAnalysisOutput } from "@/ai/flows/farmer-scheme-eligibility-analyzer";
+import { type FarmerProfileInput, type MatchedScheme } from "@/ai/schemas";
 import { type FarmerSummaryOutput } from "@/ai/flows/farmer-summary-generator";
 import { getEligibleSchemes, getFarmerSummary } from "@/app/actions";
 import FarmerProfileForm from "@/app/components/farmer-profile-form";
 import SchemeResults from "@/app/components/scheme-results";
 import SummaryReport from "@/app/components/summary-report";
+import DocumentReadinessChecker from "@/app/components/document-readiness-checker";
 import { useToast } from "@/hooks/use-toast";
+import { Logo } from "@/app/components/icons";
 
 type ResultsState = {
-    matchedSchemes: {
-        name: string;
-        benefits: string;
-        eligibilityCriteria: string;
-        semantic_similarity_score: number;
-        relevance_reason: string;
-        is_possibly_relevant: boolean;
-        applicationGuideLink?: string | undefined;
-    }[];
+    matchedSchemes: MatchedScheme[];
     nearMisses?: {
         name: string;
         reason_not_eligible: string;
@@ -90,6 +84,11 @@ export default function Home() {
             </p>
             <FarmerProfileForm onSubmit={handleFormSubmit} isLoading={isLoading} />
             { (isLoading || results) && <SchemeResults results={results} isLoading={isLoading} farmerProfile={farmerProfile} />}
+            
+            { results && (results.matchedSchemes.length > 0 || (results.nearMisses && results.nearMisses.length > 0)) && !isLoading &&
+              <DocumentReadinessChecker matchedSchemes={results.matchedSchemes} />
+            }
+
             { (isSummaryLoading || summary) && <SummaryReport summary={summary} isLoading={isSummaryLoading} /> }
         </div>
     </main>

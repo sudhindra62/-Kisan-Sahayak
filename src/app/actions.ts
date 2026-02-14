@@ -15,6 +15,11 @@ import {
     type FarmerSummaryInput,
     type FarmerSummaryOutput,
 } from "@/ai/flows/farmer-summary-generator";
+import {
+    checkDocumentReadiness,
+    type DocumentReadinessInput,
+    type DocumentReadinessOutput,
+} from "@/ai/flows/document-readiness-checker";
 
 export async function getEligibleSchemes(
   data: FarmerProfileInput
@@ -49,5 +54,17 @@ export async function getFarmerSummary(
     } catch (error) {
         console.error("Error in getFarmerSummary server action:", error);
         throw new Error("Failed to generate the farmer summary.");
+    }
+}
+
+export async function getDocumentReadiness(
+    data: DocumentReadinessInput
+): Promise<DocumentReadinessOutput> {
+    try {
+        const result = await checkDocumentReadiness(data);
+        return result;
+    } catch (error) {
+        console.error("Error in getDocumentReadiness server action:", error);
+        throw new Error("Failed to check document readiness.");
     }
 }

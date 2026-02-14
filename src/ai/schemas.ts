@@ -20,7 +20,7 @@ export const GovernmentSchemeSchema = z.object({
   applicationGuideLink: z.string().optional().describe('Link to the official application guide or portal.'),
 });
 
-const MatchedSchemeSchema = z.object({
+export const MatchedSchemeSchema = z.object({
   name: z.string().describe('The name of the government scheme.'),
   benefits: z.string().describe('A summary of the benefits provided by the scheme.'),
   eligibilityCriteria: z.string().describe('Detailed criteria for eligibility.'),
@@ -63,4 +63,17 @@ export const SchemeAnalysisOutputSchema = z.object({
       "A list of government schemes that are semantically relevant to the farmer's profile, sorted by relevance score."
     ),
   nearMisses: z.array(NearMissSchemeSchema).describe('A list of schemes where the farmer is close to qualifying, with suggestions for improvement.'),
+});
+
+
+// Schemas for Document Readiness Checker
+export const DocumentReadinessInputSchema = z.object({
+  userDocuments: z.array(z.string()).describe("A list of documents that the farmer has."),
+  matchedSchemes: z.array(MatchedSchemeSchema).describe("The schemes the farmer was matched with."),
+});
+
+export const DocumentReadinessOutputSchema = z.object({
+  missing_documents: z.array(z.string()).describe("A list of required documents that the farmer is missing."),
+  optional_alternatives: z.array(z.string()).describe("Suggestions for alternative documents or guidance on how to obtain the missing ones."),
+  readiness_status: z.string().describe("A summary status of the farmer's document readiness (e.g., 'Ready to Apply', 'Missing Key Documents')."),
 });
