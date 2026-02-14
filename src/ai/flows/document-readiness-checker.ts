@@ -48,7 +48,7 @@ Eligibility: {{{this.eligibilityCriteria}}}
 {{/each}}
 
 **Instructions:**
-1.  **Identify All Required Documents:** Based on the eligibility criteria of all matched schemes, infer a comprehensive list of all likely required documents. Common documents include 'Aadhaar Card', 'PAN Card', 'Bank Passbook', 'Land Ownership Records (like 7/12 extract or RoR)', 'Income Certificate', 'Caste Certificate', 'Passport Size Photograph'. Use the scheme details to find specific requirements.
+1.  **Identify All Required Documents:** Based on the eligibility criteria of all matched schemes, infer a comprehensive list of all likely required documents. Common documents include 'Aadhaar Card', 'Land Ownership Records (like 7/12 extract or RoR)', 'Income Certificate', 'Voter ID Card', and 'Passport Size Photograph'. Use the scheme details to find specific requirements.
 2.  **Identify Missing Documents:** Compare the list of required documents with the farmer's list of available documents. Create a list of all documents that are required but missing.
 3.  **Suggest Alternatives:** For the missing documents, suggest common, officially acceptable alternatives. For example, a 'Voter ID Card' or 'Ration Card' can sometimes be used as proof of identity or address. Provide these as helpful tips.
 4.  **Determine Readiness Status:** Based on the analysis, provide a clear readiness status.
@@ -84,3 +84,5 @@ const documentReadinessCheckerFlow = ai.defineFlow(
     return output;
   }
 );
+
+    

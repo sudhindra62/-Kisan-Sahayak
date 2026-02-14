@@ -10,17 +10,13 @@ import { Bot, FileCheck, FileX, ShieldQuestion, Lightbulb } from 'lucide-react';
 
 const commonDocuments = [
   'Aadhaar Card',
-  'PAN Card',
-  'Bank Passbook / Bank Account Details',
   'Land Ownership Documents (e.g., 7/12 extract, RoR)',
+  'Income Certificate',
   'Passport Size Photograph',
   'Voter ID Card',
-  'Ration Card',
-  'Income Certificate',
   'Caste Certificate (if applicable)',
-  'Domicile Certificate (Nivasi Praman Patra)',
   'Mobile Number linked to Aadhaar',
-  'Soil Health Card',
+  'Image of Damaged Crop or Farmland',
 ];
 
 type DocumentReadinessCheckerProps = {
@@ -187,3 +183,5 @@ export default function DocumentReadinessChecker({
     </section>
   );
 }
+
+    

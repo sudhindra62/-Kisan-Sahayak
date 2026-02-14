@@ -24,9 +24,8 @@ const formSchema = z.object({
 type DocumentsState = {
   landProofUrl?: string;
   incomeCertificateUrl?: string;
-  cropProofUrl?: string;
-  bankPassbookUrl?: string;
   identityProofUrl?: string;
+  damagedCropImageUrl?: string;
 }
 
 type FarmerProfileFormProps = {
@@ -70,7 +69,7 @@ export default function FarmerProfileForm({ onSubmit, isLoading, userId, isUserL
     onSubmit(data, documents);
   }
 
-  const requiredDocsUploaded = documents.landProofUrl && documents.incomeCertificateUrl && documents.cropProofUrl;
+  const requiredDocsUploaded = documents.landProofUrl && documents.incomeCertificateUrl && documents.identityProofUrl;
   const isSubmitDisabled = isLoading || isUserLoading || !userId || !requiredDocsUploaded;
 
   return (
@@ -148,25 +147,18 @@ export default function FarmerProfileForm({ onSubmit, isLoading, userId, isUserL
                 required
               />
               <FileUploader 
-                label="Crop Registration Proof"
-                docType="crop_proof"
-                onUploadComplete={(url) => handleUploadComplete('cropProofUrl', url)}
-                onFileRemove={() => handleFileRemove('cropProofUrl')}
-                userId={userId}
-                required
-              />
-              <FileUploader 
-                label="Bank Passbook Copy"
-                docType="bank_passbook"
-                onUploadComplete={(url) => handleUploadComplete('bankPassbookUrl', url)}
-                onFileRemove={() => handleFileRemove('bankPassbookUrl')}
-                userId={userId}
-              />
-              <FileUploader 
                 label="Identity Proof"
                 docType="identity_proof"
                 onUploadComplete={(url) => handleUploadComplete('identityProofUrl', url)}
                 onFileRemove={() => handleFileRemove('identityProofUrl')}
+                userId={userId}
+                required
+              />
+              <FileUploader 
+                label="Image of Damaged Crop (Optional)"
+                docType="damaged_crop_image"
+                onUploadComplete={(url) => handleUploadComplete('damagedCropImageUrl', url)}
+                onFileRemove={() => handleFileRemove('damagedCropImageUrl')}
                 userId={userId}
               />
             </div>
@@ -190,8 +182,10 @@ export default function FarmerProfileForm({ onSubmit, isLoading, userId, isUserL
           )}
         </button>
         {isSubmitDisabled && !isLoading && !isUserLoading && (
-          <p className="error-message text-center mt-4">Please upload all required documents (Land Proof, Income Certificate, Crop Proof) to continue.</p>
+          <p className="error-message text-center mt-4">Please upload all required documents (Land Proof, Income Certificate, Identity Proof) to continue.</p>
         )}
     </form>
   );
 }
+
+    

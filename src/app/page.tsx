@@ -17,9 +17,8 @@ import { doc } from "firebase/firestore";
 type DocumentsState = {
   landProofUrl?: string;
   incomeCertificateUrl?: string;
-  cropProofUrl?: string;
-  bankPassbookUrl?: string;
   identityProofUrl?: string;
+  damagedCropImageUrl?: string;
 }
 
 export default function Home() {
@@ -80,9 +79,8 @@ export default function Home() {
         id: userId,
         landProofUrl: documents.landProofUrl || '',
         incomeCertificateUrl: documents.incomeCertificateUrl || '',
-        cropProofUrl: documents.cropProofUrl || '',
-        bankPassbookUrl: documents.bankPassbookUrl || '',
         identityProofUrl: documents.identityProofUrl || '',
+        damagedCropImageUrl: documents.damagedCropImageUrl || '',
         uploadTimestamp: new Date().toISOString(),
         verificationStatus: 'Pending',
     };
@@ -173,3 +171,5 @@ export default function Home() {
     </main>
   );
 }
+
+    
