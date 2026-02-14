@@ -11,6 +11,16 @@ import DocumentReadinessChecker from "@/app/components/document-readiness-checke
 import { useToast } from "@/hooks/use-toast";
 import type { PredictiveAnalysisOutput } from "@/ai/flows/predictive-scheme-analyzer";
 import PredictiveAnalysis from "@/app/components/predictive-analysis";
+import { useAuth, useFirestore, useUser, initiateAnonymousSignIn, setDocumentNonBlocking } from "@/firebase";
+import { doc } from "firebase/firestore";
+
+type DocumentsState = {
+  landProofUrl?: string;
+  incomeCertificateUrl?: string;
+  cropProofUrl?: string;
+  bankPassbookUrl?: string;
+  identityProofUrl?: string;
+}
 
 export default function Home() {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -22,12 +32,63 @@ export default function Home() {
   const [isPredictionsLoading, setIsPredictionsLoading] = React.useState(false);
   const { toast } = useToast();
 
-  const handleFormSubmit = async (data: FarmerProfileInput) => {
+  const auth = useAuth();
+  const firestore = useFirestore();
+  const { user, isUserLoading } = useUser();
+
+  React.useEffect(() => {
+    if (!isUserLoading && !user) {
+      initiateAnonymousSignIn(auth);
+    }
+  }, [user, isUserLoading, auth]);
+
+
+  const handleFormSubmit = async (data: FarmerProfileInput, documents: DocumentsState) => {
     setIsLoading(true);
     setResults(null);
     setSummary(null);
     setPredictions(null);
     setFarmerProfile(data);
+
+    if (!user?.uid) {
+        toast({
+            variant: 'destructive',
+            title: 'Authentication Error',
+            description: 'Could not authenticate user. Please try again.',
+        });
+        setIsLoading(false);
+        return;
+    }
+    const userId = user.uid;
+
+    // --- Save data to Firestore (non-blocking) ---
+    const farmerProfileRef = doc(firestore, 'users', userId, 'farmer_profile', userId);
+    const farmerProfileForDb = {
+        id: userId,
+        landSize: data.landSize,
+        state: data.location.state,
+        district: data.location.district,
+        cropType: data.cropType,
+        irrigationType: data.irrigationType,
+        annualIncome: data.annualIncome,
+        documentSetId: userId,
+    };
+    setDocumentNonBlocking(farmerProfileRef, farmerProfileForDb, { merge: true });
+
+    const docRef = doc(firestore, 'users', userId, 'uploaded_documents', userId);
+    const docData = {
+        id: userId,
+        landProofUrl: documents.landProofUrl || '',
+        incomeCertificateUrl: documents.incomeCertificateUrl || '',
+        cropProofUrl: documents.cropProofUrl || '',
+        bankPassbookUrl: documents.bankPassbookUrl || '',
+        identityProofUrl: documents.identityProofUrl || '',
+        uploadTimestamp: new Date().toISOString(),
+        verificationStatus: 'Pending',
+    };
+    setDocumentNonBlocking(docRef, docData, { merge: true });
+    // --- End Firestore save ---
+
     try {
       const eligibilityResults = await getEligibleSchemes(data);
       setResults(eligibilityResults);
@@ -93,7 +154,12 @@ export default function Home() {
             <p>
                 Enter your details below to discover government schemes tailored to your needs and get guidance on how to apply.
             </p>
-            <FarmerProfileForm onSubmit={handleFormSubmit} isLoading={isLoading} />
+            <FarmerProfileForm 
+              onSubmit={handleFormSubmit} 
+              isLoading={isLoading}
+              userId={user?.uid}
+              isUserLoading={isUserLoading}
+            />
             { (isLoading || results) && <SchemeResults results={results} isLoading={isLoading} farmerProfile={farmerProfile} />}
             
             { results && (results.eligible_schemes.length > 0 || (results.nearMisses && results.nearMisses.length > 0)) && !isLoading &&

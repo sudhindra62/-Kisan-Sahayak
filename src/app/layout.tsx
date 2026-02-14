@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
   title: 'KisanSahayak',
@@ -20,10 +21,12 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
       </head>
       <body>
-        <div className="center-blend"></div>
-        <div className="center-glow"></div>
-        {children}
-        <Toaster />
+        <FirebaseClientProvider>
+          <div className="center-blend"></div>
+          <div className="center-glow"></div>
+          {children}
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );
