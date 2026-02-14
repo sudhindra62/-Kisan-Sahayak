@@ -187,7 +187,6 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
               <div className="result-card" key={index}>
                 <div className="result-card-header">
                     <h3><Leaf className="mr-3 text-current h-6 w-6" /> {scheme.scheme_name}</h3>
-                    <span className="score-badge">{scheme.eligibility_score}% Match</span>
                 </div>
                 
                 <div className="result-section">

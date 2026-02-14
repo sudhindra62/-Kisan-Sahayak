@@ -26,7 +26,6 @@ export const GovernmentSchemeSchema = z.object({
 export const EligibleSchemeSchema = z.object({
   scheme_name: z.string().describe("The name of the eligible government scheme."),
   adjusted_subsidy_amount: z.string().describe("The estimated subsidy amount adjusted for the farmer's state and other factors, formatted as a currency string (e.g., '₹26,000')."),
-  eligibility_score: z.number().min(0).max(100).describe("A score from 0-100 indicating how well the farmer's profile matches the scheme's criteria."),
   scheme_category: z.string().describe("The category of the scheme (e.g., 'Crop Support Subsidy', 'National', 'Irrigation')."),
   explanation: z.string().describe("A clear, personalized explanation of why the farmer qualifies for this scheme, referencing their profile details."),
   benefits: z.string().describe("A summary of the scheme's benefits."),
@@ -35,12 +34,14 @@ export const EligibleSchemeSchema = z.object({
 });
 
 // New Schema for Near Misses
-const NearMissSchemeSchema = z.object({
+export const NearMissSchemeSchema = z.object({
   name: z.string().describe('The name of the scheme the farmer nearly qualifies for.'),
   reason_not_eligible: z.string().describe('A clear explanation of the specific criteria the farmer fails to meet.'),
   improvement_suggestions: z.array(z.string()).describe('Actionable suggestions for what the farmer could change to become eligible in the future (e.g., "Form a Self-Help Group", "Switch to a water-saving irrigation method like Drip").'),
   alternate_scheme_suggestions: z.array(z.string()).describe('A list of other scheme names from the provided list that might be a better fit for the farmer\'s current profile.'),
 });
+export type NearMiss = z.infer<typeof NearMissSchemeSchema>;
+
 
 // Output Schema for the analysis
 export const SchemeAnalysisOutputSchema = z.object({
@@ -51,6 +52,10 @@ export const SchemeAnalysisOutputSchema = z.object({
     ),
   nearMisses: z.array(NearMissSchemeSchema).describe('A list of schemes where the farmer is close to qualifying, with suggestions for improvement.'),
 });
+
+export type FarmerProfileInput = z.infer<typeof FarmerProfileInputSchema>;
+export type EligibleScheme = z.infer<typeof EligibleSchemeSchema>;
+export type SchemeAnalysisOutput = z.infer<typeof SchemeAnalysisOutputSchema>;
 
 
 // Schemas for Document Readiness Checker

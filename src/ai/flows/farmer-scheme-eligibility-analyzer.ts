@@ -102,7 +102,7 @@ const farmerSchemeEligibilityPrompt = ai.definePrompt({
     }),
   },
   output: { schema: SchemeAnalysisOutputSchema },
-  prompt: `You are a hyper-intelligent AI assistant for Indian agriculture, with deep expertise in government schemes. Your task is to act as the complete backend logic for finding and tailoring schemes for a farmer. You MUST follow all rules precisely.
+  prompt: `You are a hyper-intelligent AI assistant for Indian agriculture, with deep expertise in government schemes. Your task is to act as the complete backend logic for finding and tailoring schemes for a farmer. You MUST follow all rules precisely and do NOT use numerical scoring.
 
 **Farmer's Profile:**
 - Land Size: {{{farmerProfile.landSize}}} acres
@@ -131,7 +131,7 @@ const farmerSchemeEligibilityPrompt = ai.definePrompt({
   - Schemes in the 'Small Land Holding Bonus Scheme' or 'Women Farmer Support Scheme' categories are generally for income < ₹2,50,000.
 - **Semantic Crop Matching:** Analyze the farmer's \`cropType\`. Match it against the \`Eligibility Rules\` of each scheme. Use semantic understanding (e.g., 'paddy' is 'rice', 'groundnut' is a type of 'oilseed'). Handle spelling mistakes. A scheme is a potential match if the farmer's crop is mentioned, implied, or belongs to a category of crops mentioned.
 
-**STEP 2: Calculate Eligibility Score & Adjusted Subsidy**
+**STEP 2: Calculate Adjusted Subsidy**
 For each potentially matched scheme from STEP 1, calculate the following:
 
 - **Land Size Adjustment (on Base Subsidy):**
@@ -139,42 +139,31 @@ For each potentially matched scheme from STEP 1, calculate the following:
   - Medium Farmer (2-5 acres): Use standard base subsidy.
   - Large Farmer (5+ acres): Decrease base subsidy by 15%.
 - **Final Adjusted Subsidy:** This is the \`base_subsidy_amount\` after applying the Land Size Adjustment. Format it as a currency string '₹X,XXX'.
-- **Eligibility Score (0-100):**
-  - Start with a base score of 60 for any match from STEP 1.
-  - **Crop relevance:** +20 for a direct, exact crop match. +10 for a strong semantic match.
-  - **Income priority:** +10 if income is < ₹1,00,000 and the scheme is a support/subsidy type.
-  - **Land size priority:** +10 if the farmer's category is 'Small and Marginal' and the scheme is a 'Small Land Holding Bonus Scheme' or similar.
-  - **Irrigation Bonus:** +20 for 'Rainfed' farmers for schemes like 'Rainfed Farming Support' or 'Irrigation Equipment Subsidy'. +10 for 'Well' or 'Canal' farmers for 'High Yield Crop Incentive' schemes.
-  - Cap the total score at 100.
 
-**STEP 3: Rank and Select Top Schemes**
-- Discard any scheme with a final \`eligibility_score\` below 55.
-- Rank the remaining schemes from highest score to lowest.
-- Select the top 5-7 schemes to present to the user.
+**STEP 3: Select Top Schemes and Handle Fallbacks**
+- From the filtered list, select the top 5-7 most relevant schemes.
+- **"No Empty Result" Rule (CRITICAL):**
+  - If, after all filtering, the list of eligible schemes is empty, you MUST NOT return an empty array.
+  - **First Fallback:** Find the most relevant *National Scheme* (PM-KISAN, PMFBY, KCC). Pick the one that best fits the farmer's general profile.
+  - **Second Fallback:** If even national schemes seem irrelevant, return the "Universal Farmer Development Scheme".
+  - When using a fallback, generate a single scheme entry. Calculate a basic \`adjusted_subsidy_amount\`, and write an \`explanation\` that clearly states this is a generally available scheme because no specific matches were found.
 
-**STEP 4: Handle "No Match" Scenario (CRITICAL)**
-- **If, after all filtering, the list of eligible schemes is empty, you MUST NOT return an empty array.**
-- **First Fallback:** Find the most relevant *National Scheme* from the provided list (PM-KISAN, PMFBY, KCC). Pick the one that best fits the farmer's general profile.
-- **Second Fallback:** If even national schemes seem irrelevant, return the "Universal Farmer Development Scheme".
-- When using a fallback, generate a single entry. Set \`eligibility_score\` to 50, calculate a basic \`adjusted_subsidy_amount\`, and write an \`explanation\` that clearly states this is a generally available scheme because no specific matches were found.
-
-**STEP 5: Generate Final Output Structure**
+**STEP 4: Generate Final Output Structure**
 For each of the final selected schemes (including fallbacks), create an object with:
 - \`scheme_name\`: The scheme's name.
 - \`adjusted_subsidy_amount\`: The final calculated and formatted subsidy.
-- \`eligibility_score\`: The final score (0-100).
 - \`scheme_category\`: The scheme's category.
 - \`benefits\`: The original benefits text.
 - \`eligibilityCriteria\`: The original eligibility criteria text.
 - \`applicationGuideLink\`: The original link, if it exists.
-- \`explanation\`: A **personalized** explanation. Example: "As a farmer in Maharashtra with 2 acres of land growing Soybean, you are a strong candidate for this scheme. The subsidy has been adjusted for your small land holding, giving you a higher benefit."
+- \`explanation\`: A **personalized** eligibility reason. Example: "As a farmer in Maharashtra with 2 acres of land growing Soybean, you are a strong candidate for this scheme. The subsidy has been adjusted for your small land holding, giving you a higher benefit."
 
-**STEP 6: Analyze Near Misses**
+**STEP 5: Analyze Near Misses**
 - From the schemes you discarded in STEP 1 or 2, identify 1-2 "near-misses".
 - A near-miss is where the farmer fails only one major criterion (e.g., income is slightly too high, land is just over the limit, wrong irrigation type).
 - For each near-miss, provide \`reason_not_eligible\`, \`improvement_suggestions\`, and \`alternate_scheme_suggestions\`.
 
-You are the entire backend. Be precise, logical, and always provide a result.
+You are the entire backend. Be precise, logical, and always provide a result based on these rules. Do not use numerical scores.
 `
 });
 
