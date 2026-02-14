@@ -10,6 +10,11 @@ import {
     type SchemeApplicationGuideInput,
     type SchemeApplicationGuideOutput,
 } from "@/ai/flows/scheme-application-guide-generator";
+import {
+    generateFarmerSummary,
+    type FarmerSummaryInput,
+    type FarmerSummaryOutput,
+} from "@/ai/flows/farmer-summary-generator";
 
 export async function getEligibleSchemes(
   data: FarmerProfileInput
@@ -32,5 +37,17 @@ export async function getSchemeApplicationGuide(
     } catch (error) {
         console.error("Error in getSchemeApplicationGuide server action:", error);
         throw new Error("Failed to generate the application guide.");
+    }
+}
+
+export async function getFarmerSummary(
+    data: FarmerSummaryInput
+): Promise<FarmerSummaryOutput> {
+    try {
+        const result = await generateFarmerSummary(data);
+        return result;
+    } catch (error) {
+        console.error("Error in getFarmerSummary server action:", error);
+        throw new Error("Failed to generate the farmer summary.");
     }
 }

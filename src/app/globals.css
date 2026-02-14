@@ -543,3 +543,40 @@ select {
     text-align: left;
     margin-bottom: 0;
 }
+
+/* ============================= */
+/* SUMMARY REPORT STYLES         */
+/* ============================= */
+
+.summary-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    background: rgba(0,0,0,0.2);
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.summary-icon {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    color: #f5c542;
+    margin-top: 4px;
+}
+.summary-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 0.5rem;
+}
+.summary-text {
+    color: rgba(255,255,255,0.85);
+    line-height: 1.7;
+    text-align: left;
+    margin-bottom: 0.5rem;
+}
+.summary-small {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.6);
+}
