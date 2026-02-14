@@ -1,4 +1,3 @@
-/* ============================= */
 /* RESET */
 /* ============================= */
 
@@ -11,77 +10,99 @@
 
 body {
   min-height: 100vh;
-  color: #ffffff;
   overflow-x: hidden;
+  color: #ffffff;
   position: relative;
-  background: #081410;
+  background: #000;
 }
 
 /* ============================= */
-/* EXACT CLARITYBOOST BACKGROUND */
+/* LAYER 1 — HARD 50/50 COLOR SPLIT */
 /* ============================= */
 
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -3;
+  z-index: -5;
 
   background: linear-gradient(
     90deg,
-    #052e25 0%,      /* deep emerald left */
-    #0b3d2e 25%,
-    #1f4d2e 40%,     /* blend start */
-    #6b5a1a 60%,     /* blend end */
-    #8c6b0e 75%,
-    #a97808 100%     /* rich gold right */
+    #0b3b2e 0%,        /* emerald left */
+    #0b3b2e 50%,       /* hard split */
+    #8a650d 50%,       /* hard split */
+    #8a650d 100%       /* rich gold right */
   );
 }
 
-/* Soft center blend glow */
+/* ============================= */
+/* LAYER 2 — SOFT CENTER BLEND TEXTURE */
+/* ============================= */
+
 body::after {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -2;
+  z-index: -4;
 
-  background: radial-gradient(
-    circle at 50% 45%,
-    rgba(255, 196, 0, 0.25) 0%,
-    rgba(255, 196, 0, 0.15) 20%,
-    transparent 50%
+  background: linear-gradient(
+    90deg,
+    transparent 40%,
+    rgba(40, 40, 20, 0.6) 48%,
+    rgba(40, 40, 20, 0.6) 52%,
+    transparent 60%
   );
 }
 
-/* Edge vignette */
-body {
-  box-shadow: inset 0 0 220px rgba(0,0,0,0.85);
+/* ============================= */
+/* LAYER 3 — RADIAL DEPTH LIGHT */
+/* ============================= */
+
+.background-light {
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 200, 60, 0.18) 0%,
+    rgba(255, 200, 60, 0.10) 20%,
+    transparent 55%
+  );
 }
 
 /* ============================= */
-/* GLASS CARD */
+/* LAYER 4 — EDGE VIGNETTE */
+/* ============================= */
+
+body {
+  box-shadow: inset 0 0 300px rgba(0,0,0,0.9);
+}
+
+/* ============================= */
+/* MAIN CARD */
 /* ============================= */
 
 .form-container {
   width: 85%;
   max-width: 1100px;
-  margin: 100px auto;
-  padding: 65px;
-  border-radius: 28px;
+  margin: 110px auto;
+  padding: 75px;
+  border-radius: 32px;
 
   background: linear-gradient(
     135deg,
-    rgba(10, 50, 35, 0.85),
-    rgba(90, 65, 12, 0.75)
+    rgba(8, 45, 35, 0.88),
+    rgba(90, 60, 15, 0.88)
   );
 
-  backdrop-filter: blur(40px);
+  backdrop-filter: blur(50px);
 
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.05);
 
   box-shadow:
-    0 60px 140px rgba(0,0,0,0.85),
-    0 0 120px rgba(255, 170, 0, 0.12);
+    0 80px 180px rgba(0,0,0,0.95),
+    0 0 150px rgba(200, 150, 20, 0.12);
 }
 
 /* ============================= */
@@ -89,17 +110,18 @@ body {
 /* ============================= */
 
 .form-container h1 {
-  font-size: 42px;
+  font-size: 44px;
   text-align: center;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  color: #ffffff;
 }
 
 .form-container > p {
   text-align: center;
-  opacity: 0.85;
-  margin-bottom: 55px;
+  margin-bottom: 65px;
   font-size: 16px;
+  color: rgba(255,255,255,0.85);
 }
 
 /* ============================= */
@@ -109,7 +131,7 @@ body {
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 30px;
+  gap: 34px;
 }
 
 /* ============================= */
@@ -122,17 +144,17 @@ body {
 }
 
 label {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   font-size: 14px;
   color: rgba(255,255,255,0.9);
 }
 
 input, select {
-  padding: 18px;
-  border-radius: 18px;
+  padding: 20px;
+  border-radius: 22px;
 
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
 
   color: #ffffff;
   font-size: 15px;
@@ -147,18 +169,18 @@ input::placeholder {
 
 input:focus, select:focus {
   outline: none;
-  border-color: #f5c542;
+  border-color: #caa12a;
 
   box-shadow:
-    0 0 0 2px rgba(245,197,66,0.25),
-    0 0 30px rgba(245,197,66,0.5);
+    0 0 0 2px rgba(202,161,42,0.25),
+    0 0 35px rgba(202,161,42,0.4);
 }
 
 select {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 18px center;
+  background-position: right 20px center;
   background-size: 16px;
 }
 
@@ -167,30 +189,29 @@ select {
 /* ============================= */
 
 .premium-btn {
-  margin-top: 70px;
+  margin-top: 80px;
   width: 100%;
-  padding: 24px;
-  border-radius: 70px;
+  padding: 28px;
+  border-radius: 90px;
   border: none;
 
   font-size: 18px;
   font-weight: 600;
-  
   display: flex;
   align-items: center;
   justify-content: center;
 
   background: linear-gradient(
     90deg,
-    #b8860b,
-    #f5c542
+    #8a650d,
+    #caa12a
   );
 
-  color: #0b3d2e;
+  color: #052f25;
 
   box-shadow:
-    0 30px 80px rgba(0,0,0,0.7),
-    0 0 50px rgba(245,197,66,0.6);
+    0 50px 120px rgba(0,0,0,0.85),
+    0 0 70px rgba(202,161,42,0.7);
 
   transition: all 0.35s ease;
   cursor: pointer;
@@ -200,15 +221,15 @@ select {
   transform: translateY(-6px);
 
   box-shadow:
-    0 40px 100px rgba(0,0,0,0.8),
-    0 0 70px rgba(245,197,66,0.85);
+    0 60px 150px rgba(0,0,0,0.95),
+    0 0 90px rgba(202,161,42,0.9);
 }
 
 .premium-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
   transform: translateY(0);
-  box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+  box-shadow: 0 50px 120px rgba(0,0,0,0.85);
 }
 
 
@@ -218,7 +239,7 @@ select {
 
 .results-container {
   width: 100%;
-  margin-top: 60px;
+  margin-top: 75px;
   animation: fade-in 0.7s ease-out;
 }
 
@@ -229,9 +250,9 @@ select {
 
 .results-title {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 50px;
   font-weight: 600;
-  font-size: 34px;
+  font-size: 36px;
   color: #ffffff;
 }
 
@@ -239,30 +260,30 @@ select {
   background:
     linear-gradient(
       135deg,
-      rgba(8, 55, 40, 0.7),
-      rgba(80, 60, 10, 0.5)
+      rgba(6, 50, 38, 0.6),
+      rgba(90, 60, 15, 0.45)
     );
   border: 1px solid rgba(255, 255, 255, 0.07);
-  padding: 35px 40px;
-  border-radius: 24px;
-  margin-bottom: 30px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  padding: 40px 45px;
+  border-radius: 26px;
+  margin-bottom: 32px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.6);
 }
 
 .result-card h3 {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 600;
-  margin-bottom: 30px;
-  color: #f5c542;
+  margin-bottom: 35px;
+  color: #caa12a;
   display: flex;
   align-items: center;
 }
 
 .result-section h4 {
   font-weight: 600;
-  font-size: 17px;
+  font-size: 18px;
   color: #fff;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .result-section p {
@@ -273,34 +294,34 @@ select {
 }
 
 .result-section {
-  margin-bottom: 30px;
+  margin-bottom: 35px;
 }
 
 .result-card a.premium-btn {
-  margin-top: 15px;
+  margin-top: 20px;
   width: auto;
-  padding: 16px 32px;
+  padding: 18px 36px;
   font-size: 16px;
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  border-radius: 50px;
+  border-radius: 60px;
 }
 
 .no-results-card {
-  padding: 60px;
+  padding: 65px;
   text-align: center;
 }
 
 .no-results-card .icon {
   margin: 0 auto 1.5rem;
-  width: 58px;
-  height: 58px;
+  width: 60px;
+  height: 60px;
   color: rgba(255,255,255,0.7);
 }
 
 .no-results-card h2 {
-  font-size: 26px;
+  font-size: 28px;
   margin-bottom: 15px;
   color: #fff;
 }
@@ -317,15 +338,15 @@ select {
 .error-message {
     color: #fdd835;
     font-size: 13px;
-    margin-top: 10px;
+    margin-top: 12px;
 }
 
 .loading-spinner {
     display: inline-block;
     width: 22px;
     height: 22px;
-    border: 3px solid rgba(11, 61, 46, 0.4);
-    border-top-color: #f5c542;
+    border: 3px solid rgba(5, 47, 37, 0.4);
+    border-top-color: #caa12a;
     border-radius: 50%;
     animation: spin 1s ease-in-out infinite;
     margin-right: 15px;
