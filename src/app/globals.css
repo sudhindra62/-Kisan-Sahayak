@@ -759,6 +759,22 @@ select {
   animation: fade-in 0.4s ease-out;
 }
 
+.chat-page-container {
+  width: 100%;
+  max-width: 700px;
+  height: 85vh;
+  max-height: 800px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 28px;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(6,45,35,0.95), rgba(100,65,10,0.92));
+  backdrop-filter: blur(40px);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 50px 150px rgba(0,0,0,0.8);
+  animation: fade-in 0.4s ease-out;
+}
+
 .chat-header {
   display: flex;
   align-items: center;
@@ -775,8 +791,7 @@ select {
   margin-left: 12px;
 }
 
-.chat-close-btn {
-  margin-left: auto;
+.chat-close-btn, .chat-back-btn {
   background: none;
   border: none;
   color: rgba(255,255,255,0.6);
@@ -784,9 +799,21 @@ select {
   padding: 5px;
   border-radius: 50%;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.chat-close-btn:hover {
+.chat-close-btn {
+    margin-left: auto;
+}
+
+.chat-back-btn {
+    margin-right: 12px;
+}
+
+
+.chat-close-btn:hover, .chat-back-btn:hover {
   color: #fff;
   background: rgba(255,255,255,0.1);
 }
@@ -958,5 +985,3 @@ select {
     border-radius: 0;
   }
 }
-
-    

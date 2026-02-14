@@ -1,24 +1,24 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { ArrowUp, Bot, X } from 'lucide-react';
+import { ArrowLeft, ArrowUp, Bot } from 'lucide-react';
 import type { ChatMessage, FarmerProfileInput } from '@/ai/schemas';
 import { getChatbotResponse } from '@/app/actions';
 import ChatMessageDisplay from './ChatMessage';
+import Link from 'next/link';
 
 type ChatWindowProps = {
   farmerProfile: FarmerProfileInput;
   userId: string;
-  onClose: () => void;
 };
 
 const initialMessages: ChatMessage[] = [
     { role: 'model', content: 'Hello! I am your KisanSahayak AI assistant. How can I help you today?' },
 ];
 
-export default function ChatWindow({ farmerProfile, userId, onClose }: ChatWindowProps) {
+export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const chatBodyRef = useRef<HTMLDivElement>(null);
@@ -83,15 +83,13 @@ export default function ChatWindow({ farmerProfile, userId, onClose }: ChatWindo
     }
   };
 
-
   return (
-    <div className="chat-window">
+    <div className="chat-page-container">
       <div className="chat-header">
-        <Bot className="h-6 w-6 text-amber-300" />
+        <Link href="/" className="chat-back-btn">
+            <ArrowLeft className="h-5 w-5" />
+        </Link>
         <h3 className="chat-title">KisanSahayak Assistant</h3>
-        <button onClick={onClose} className="chat-close-btn">
-          <X className="h-5 w-5" />
-        </button>
       </div>
 
       <div className="chat-body" ref={chatBodyRef}>
@@ -136,5 +134,3 @@ export default function ChatWindow({ farmerProfile, userId, onClose }: ChatWindo
     </div>
   );
 }
-
-    

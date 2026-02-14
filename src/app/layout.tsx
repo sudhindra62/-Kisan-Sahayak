@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import Link from 'next/link';
+import { MessageCircle } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'KisanSahayak',
@@ -24,6 +26,9 @@ export default function RootLayout({
         <FirebaseClientProvider>
           <div className="center-blend"></div>
           <div className="center-glow"></div>
+          <Link href="/chatbot" className="chatbot-trigger" title="AI Assistant">
+            <MessageCircle className="h-8 w-8" />
+          </Link>
           {children}
           <Toaster />
         </FirebaseClientProvider>
