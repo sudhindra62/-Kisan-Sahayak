@@ -56,9 +56,9 @@ export default function FarmerProfileForm({ onSubmit, isLoading }: FarmerProfile
   });
 
   return (
-    <Card className="w-full max-w-4xl mx-auto bg-card/5 backdrop-blur-xl border border-white/10 shadow-xl">
+    <Card className="w-full max-w-4xl mx-auto bg-card/5 backdrop-blur-xl border shadow-xl">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl text-white flex items-center gap-3">
+        <CardTitle className="font-headline text-2xl text-foreground flex items-center gap-3">
           <Tractor className="h-6 w-6" />
           Farmer Profile
         </CardTitle>
@@ -175,7 +175,7 @@ export default function FarmerProfileForm({ onSubmit, isLoading }: FarmerProfile
               />
             </div>
             <div className="flex justify-end pt-4">
-              <Button type="submit" disabled={isLoading} size="lg" className="w-full md:w-auto bg-neutral-900 text-white border-neutral-700 border hover:bg-neutral-800 shadow-lg transition-colors duration-300">
+              <Button type="submit" disabled={isLoading} size="lg" className="w-full md:w-auto bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg transition-colors duration-300">
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />

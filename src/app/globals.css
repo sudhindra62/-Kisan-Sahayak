@@ -4,58 +4,57 @@
 
 @layer base {
   :root {
-    --background: 220 40% 5%; /* Dark blue-ish gray */
-    --foreground: 0 0% 98%; /* Almost white */
+    --background: 210 20% 8%; /* Dark, near-black with a hint of blue */
+    --foreground: 0 0% 98%;
 
-    --card: 220 20% 10%; /* Slightly lighter for cards */
+    --card: 210 15% 13%; /* Dark card background */
     --card-foreground: 0 0% 98%;
 
-    --popover: 220 40% 5%;
+    --popover: 210 20% 8%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 160 80% 60%; /* A brighter, minty green for highlights */
-    --primary-foreground: 160 60% 5%;
+    --primary: 165 40% 35%; /* The green from the reference */
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 220 15% 15%;
+    --secondary: 215 15% 20%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 220 15% 20%;
-    --muted-foreground: 220 10% 65%;
+    --muted: 215 15% 25%;
+    --muted-foreground: 210 10% 65%;
 
-    --accent: 40 90% 60%; /* Gold/Orange for accent */
-    --accent-foreground: 0 0% 100%; /* White text on accent */
+    --accent: 38 60% 50%; /* The gold from the reference */
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 63% 40%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 15% 25%;
-    --input: 220 15% 12%;
-    --ring: 160 80% 60%;
+    --border: 210 15% 22%;
+    --input: 210 15% 17%;
+    --ring: 38 60% 55%; /* Gold for rings */
 
     --radius: 0.75rem;
   }
 
   .dark {
-    /* Keeping dark theme consistent with root for this design */
-    --background: 220 40% 5%;
+    --background: 210 20% 8%;
     --foreground: 0 0% 98%;
-    --card: 220 20% 10%;
+    --card: 210 15% 13%;
     --card-foreground: 0 0% 98%;
-    --popover: 220 40% 5%;
+    --popover: 210 20% 8%;
     --popover-foreground: 0 0% 98%;
-    --primary: 160 80% 60%;
-    --primary-foreground: 160 60% 5%;
-    --secondary: 220 15% 15%;
+    --primary: 165 40% 35%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 215 15% 20%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 220 15% 20%;
-    --muted-foreground: 220 10% 65%;
-    --accent: 40 90% 60%;
-    --accent-foreground: 0 0% 100%;
+    --muted: 215 15% 25%;
+    --muted-foreground: 210 10% 65%;
+    --accent: 38 60% 50%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 63% 40%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 15% 25%;
-    --input: 220 15% 12%;
-    --ring: 160 80% 60%;
+    --border: 210 15% 22%;
+    --input: 210 15% 17%;
+    --ring: 38 60% 55%;
   }
 }
 
@@ -65,7 +64,9 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-color: #0c1118;
-    background-image: radial-gradient(ellipse 80% 80% at 50% -20%,rgba(18, 119, 111, 0.3), hsla(0, 0%, 100%, 0));
+    background-color: #0E131A; /* Dark base */
+    background-image: 
+      radial-gradient(at 10% 20%, hsla(165, 40%, 20%, 0.3) 0px, transparent 50%),
+      radial-gradient(at 90% 80%, hsla(38, 60%, 25%, 0.3) 0px, transparent 50%);
   }
 }

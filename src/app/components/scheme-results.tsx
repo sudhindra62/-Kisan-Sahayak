@@ -28,7 +28,7 @@ type SchemeResultsProps = {
 const LoadingSkeleton = () => (
   <div className="space-y-4 w-full">
     {[...Array(3)].map((_, i) => (
-      <Card key={i} className="bg-card/5 backdrop-blur-xl border border-white/10 shadow-xl">
+      <Card key={i} className="bg-card/5 backdrop-blur-xl border shadow-xl">
         <CardHeader>
           <Skeleton className="h-6 w-3/4 bg-white/10" />
         </CardHeader>
@@ -45,7 +45,7 @@ export default function SchemeResults({ results, isLoading }: SchemeResultsProps
   if (isLoading) {
     return (
       <section className="mt-8 md:mt-0 w-full max-w-4xl text-center">
-        <h2 className="font-headline text-2xl md:text-3xl font-bold mb-6 text-white">Checking Eligibility...</h2>
+        <h2 className="font-headline text-2xl md:text-3xl font-bold mb-6 text-foreground">Checking Eligibility...</h2>
         <LoadingSkeleton />
       </section>
     );
@@ -65,8 +65,8 @@ export default function SchemeResults({ results, isLoading }: SchemeResultsProps
           <Accordion type="single" collapsible className="w-full space-y-4">
             {results.eligibleSchemes.map((scheme, index) => (
               <AccordionItem value={`item-${index}`} key={index} className="border-b-0">
-                <Card className="bg-card/5 backdrop-blur-xl border border-white/10 shadow-xl hover:border-white/20 transition-all duration-300">
-                  <AccordionTrigger className="p-6 text-lg font-semibold font-headline hover:no-underline text-white">
+                <Card className="bg-card/5 backdrop-blur-xl border shadow-xl hover:border-primary/50 transition-all duration-300">
+                  <AccordionTrigger className="p-6 text-lg font-semibold font-headline hover:no-underline text-foreground">
                     <div className="flex items-center gap-3 text-left">
                        <Leaf className="h-6 w-6 text-primary flex-shrink-0" />
                        {scheme.name}
@@ -84,7 +84,7 @@ export default function SchemeResults({ results, isLoading }: SchemeResultsProps
                       </div>
                       {scheme.applicationGuideLink && (
                         <div className="pt-2">
-                           <Button asChild size="lg" className="bg-neutral-900 text-white border-neutral-700 border hover:bg-neutral-800 shadow-lg transition-colors duration-300">
+                           <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg transition-colors duration-300">
                             <a href={scheme.applicationGuideLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
                               <ExternalLink className="h-4 w-4" />
                               Application Guide
@@ -100,9 +100,9 @@ export default function SchemeResults({ results, isLoading }: SchemeResultsProps
           </Accordion>
         </div>
       ) : (
-        <Card className="text-center p-8 w-full bg-card/5 backdrop-blur-xl border border-white/10 shadow-xl">
+        <Card className="text-center p-8 w-full bg-card/5 backdrop-blur-xl border shadow-xl">
             <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h2 className="font-headline text-2xl font-bold mb-2 text-white">No Schemes Found</h2>
+            <h2 className="font-headline text-2xl font-bold mb-2 text-foreground">No Schemes Found</h2>
             <p className="text-muted-foreground max-w-md mx-auto">
                 Based on the profile provided, we couldn't find any matching government schemes at the moment.
             </p>
