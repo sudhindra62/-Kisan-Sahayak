@@ -36,6 +36,7 @@ type GovernmentScheme = z.infer<typeof GovernmentSchemeSchema>; // Not exported,
 const MatchedSchemeSchema = z.object({
   name: z.string().describe('The name of the government scheme.'),
   benefits: z.string().describe('A summary of the benefits provided by the scheme.'),
+  eligibilityCriteria: z.string().describe('Detailed criteria for eligibility.'),
   semantic_similarity_score: z
     .number()
     .min(0)
@@ -133,6 +134,7 @@ const farmerSchemeEligibilityPrompt = ai.definePrompt({
 - **Scoring:** For each scheme, calculate a \`semantic_similarity_score\` from 0 to 100 based on how well the farmer's profile matches the scheme's intent and criteria. A score of 100 is a perfect match. A score below 50 should be discarded.
 - **Reasoning:** Provide a clear \`relevance_reason\` for each match. This reason should explain the connection between the farmer's profile (land size, location, crop, income) and the scheme's eligibility criteria.
 - **Possible Relevance:** If a scheme's relevance is uncertain or depends on specific criteria not fully covered in the profile (e.g., being part of a specific farmer group, detailed income brackets, exact location definitions like 'drought-prone area'), mark \`is_possibly_relevant\` as true. In the \`relevance_reason\` for such cases, clearly state what the farmer needs to review.
+- **Eligibility Criteria**: For each relevant scheme, you MUST include the original 'Eligibility Criteria' text from the provided scheme list in the \`eligibilityCriteria\` field.
 
 Farmer's Profile:
 - Land Size: {{{farmerProfile.landSize}}} acres

@@ -402,3 +402,144 @@ select {
   margin-bottom: 20px;
   border: 1px solid rgba(255, 245, 157, 0.2);
 }
+
+
+/* ============================= */
+/* AI GUIDE STYLES               */
+/* ============================= */
+
+.loading-spinner-small {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #d6a93c;
+    border-radius: 50%;
+    animation: spin 1s ease-in-out infinite;
+}
+
+.guide-accordion-trigger {
+    padding: 14px 20px !important;
+    border-radius: 16px !important;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-decoration: none !important;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.guide-accordion-trigger:hover:not([disabled]) {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(214, 169, 60, 0.6);
+}
+
+.guide-accordion-trigger[data-state=open] {
+    background: rgba(214, 169, 60, 0.15);
+    border-color: rgba(214, 169, 60, 0.6);
+}
+.guide-accordion .border-b {
+  border-bottom-width: 0;
+}
+
+.guide-accordion-content {
+    padding-top: 25px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 20px;
+}
+
+.guide-container {
+    animation: fade-in 0.5s ease-out;
+}
+
+.guide-section h5.guide-title {
+    display: flex;
+    align-items: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #f5c542;
+    margin-bottom: 1rem;
+}
+
+.guide-list {
+    list-style-position: outside;
+    padding-left: 1.2rem;
+    color: rgba(255,255,255,0.85);
+}
+.guide-list li {
+    margin-bottom: 10px;
+    line-height: 1.7;
+}
+.guide-text {
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.8;
+    text-align: left;
+    margin-bottom: 0;
+}
+
+.step {
+    margin-bottom: 1.75rem;
+    position: relative;
+    padding-left: 2.75rem;
+}
+
+.step:last-child {
+  margin-bottom: 0;
+}
+
+.step-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.step-number {
+    position: absolute;
+    left: 0;
+    top: -2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: rgba(214, 169, 60, 0.15);
+    border: 1px solid rgba(214, 169, 60, 0.4);
+    color: #f5c542;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.step-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #fff;
+}
+
+.step-tag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-left: 0.75rem;
+    border: 1px solid;
+}
+.step-tag.online {
+  border-color: rgba(67, 217, 175, 0.5);
+  background-color: rgba(67, 217, 175, 0.1);
+  color: #43d9af;
+}
+.step-tag.offline {
+  border-color: rgba(156, 163, 175, 0.5);
+  background-color: rgba(156, 163, 175, 0.1);
+  color: #9ca3af;
+}
+
+
+.step-description {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.7;
+    text-align: left;
+    margin-bottom: 0;
+}

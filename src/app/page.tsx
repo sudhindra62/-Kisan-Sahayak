@@ -11,6 +11,7 @@ type ResultsState = {
   matchedSchemes: {
       name: string;
       benefits: string;
+      eligibilityCriteria: string;
       semantic_similarity_score: number;
       relevance_reason: string;
       is_possibly_relevant: boolean;
@@ -22,11 +23,13 @@ type ResultsState = {
 export default function Home() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [results, setResults] = React.useState<ResultsState>(null);
+  const [farmerProfile, setFarmerProfile] = React.useState<FarmerProfileInput | null>(null);
   const { toast } = useToast();
 
   const handleFormSubmit = async (data: FarmerProfileInput) => {
     setIsLoading(true);
     setResults(null);
+    setFarmerProfile(data);
     try {
       const eligibilityResults = await getEligibleSchemes(data);
       setResults(eligibilityResults);
@@ -50,7 +53,7 @@ export default function Home() {
                 Enter your details below to discover government schemes tailored to your needs and get guidance on how to apply.
             </p>
             <FarmerProfileForm onSubmit={handleFormSubmit} isLoading={isLoading} />
-            <SchemeResults results={results} isLoading={isLoading} />
+            { (isLoading || results) && <SchemeResults results={results} isLoading={isLoading} farmerProfile={farmerProfile} />}
         </div>
     </main>
   );

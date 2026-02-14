@@ -1,21 +1,31 @@
 "use client";
 
-import { ExternalLink, Info, Leaf } from "lucide-react";
+import { ExternalLink, Info, Leaf, Bot, FileText, BookCheck, Clock, AlertTriangle, Phone } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { getSchemeApplicationGuide } from "@/app/actions";
+import type { SchemeApplicationGuideInput, SchemeApplicationGuideOutput } from "@/ai/flows/scheme-application-guide-generator";
+import type { FarmerProfileInput } from "@/ai/flows/farmer-scheme-eligibility-analyzer";
+
+type MatchedScheme = {
+  name: string;
+  benefits: string;
+  eligibilityCriteria: string;
+  semantic_similarity_score: number;
+  relevance_reason: string;
+  is_possibly_relevant: boolean;
+  applicationGuideLink?: string | undefined;
+};
 
 type Results = {
-  matchedSchemes: {
-    name: string;
-    benefits: string;
-    semantic_similarity_score: number;
-    relevance_reason: string;
-    is_possibly_relevant: boolean;
-    applicationGuideLink?: string | undefined;
-  }[];
+  matchedSchemes: MatchedScheme[];
 } | null;
 
 type SchemeResultsProps = {
   results: Results;
   isLoading: boolean;
+  farmerProfile: FarmerProfileInput | null;
 };
 
 const LoadingSkeleton = () => (
@@ -34,7 +44,86 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-export default function SchemeResults({ results, isLoading }: SchemeResultsProps) {
+
+function ApplicationGuideDisplay({ guide }: { guide: SchemeApplicationGuideOutput }) {
+    return (
+        <div className="guide-container space-y-8 pt-4">
+            <div className="guide-section">
+                <h5 className="guide-title"><FileText className="mr-3 h-5 w-5" /> Documents Required</h5>
+                <ul className="guide-list">
+                    {guide.documentsRequired.map((doc, i) => <li key={i}>{doc}</li>)}
+                </ul>
+            </div>
+            <div className="guide-section">
+                <h5 className="guide-title"><BookCheck className="mr-3 h-5 w-5" /> Application Steps</h5>
+                {guide.applicationSteps.map(step => (
+                    <div key={step.step} className="step">
+                        <div className="step-header">
+                            <span className="step-number">{step.step}</span>
+                            <span className="step-title">{step.title}</span>
+                            <span className={`step-tag ${step.isOnline ? 'online' : 'offline'}`}>{step.isOnline ? 'Online' : 'Offline'}</span>
+                        </div>
+                        <p className="step-description">{step.description}</p>
+                    </div>
+                ))}
+            </div>
+             <div className="guide-section">
+                <h5 className="guide-title"><Clock className="mr-3 h-5 w-5" /> Estimated Timeline</h5>
+                <p className="guide-text">{guide.estimatedTimeline}</p>
+            </div>
+             <div className="guide-section">
+                <h5 className="guide-title"><AlertTriangle className="mr-3 h-5 w-5" /> Common Mistakes to Avoid</h5>
+                 <ul className="guide-list">
+                    {guide.commonMistakes.map((tip, i) => <li key={i}>{tip}</li>)}
+                </ul>
+            </div>
+            <div className="guide-section">
+                <h5 className="guide-title"><Phone className="mr-3 h-5 w-5" /> Contact for Help</h5>
+                <p className="guide-text">{guide.contactAuthority}</p>
+            </div>
+        </div>
+    );
+}
+
+export default function SchemeResults({ results, isLoading, farmerProfile }: SchemeResultsProps) {
+  const [guideLoading, setGuideLoading] = useState<string | null>(null);
+  const [generatedGuides, setGeneratedGuides] = useState<Record<string, SchemeApplicationGuideOutput>>({});
+  const { toast } = useToast();
+
+  const handleGenerateGuide = async (scheme: MatchedScheme) => {
+      if (!farmerProfile) {
+          toast({
+              variant: "destructive",
+              title: "Error",
+              description: "Farmer profile is missing. Cannot generate guide.",
+          });
+          return;
+      }
+
+      setGuideLoading(scheme.name);
+      try {
+          const input: SchemeApplicationGuideInput = {
+              farmerProfile,
+              scheme: {
+                  name: scheme.name,
+                  benefits: scheme.benefits,
+                  eligibilityCriteria: scheme.eligibilityCriteria,
+                  applicationGuideLink: scheme.applicationGuideLink,
+              }
+          };
+          const guide = await getSchemeApplicationGuide(input);
+          setGeneratedGuides(prev => ({...prev, [scheme.name]: guide}));
+      } catch (error) {
+           toast({
+              variant: "destructive",
+              title: "Error",
+              description: "Failed to generate application guide. Please try again.",
+          });
+      } finally {
+          setGuideLoading(null);
+      }
+  };
+
   if (isLoading) {
     return (
       <section className="results-container w-full">
@@ -78,10 +167,45 @@ export default function SchemeResults({ results, isLoading }: SchemeResultsProps
                   <p>{scheme.relevance_reason}</p>
                 </div>
                 
+                <Accordion type="single" collapsible className="w-full mt-5 guide-accordion">
+                  <AccordionItem value={scheme.name}>
+                      <AccordionTrigger
+                          onClick={() => {
+                              if (!generatedGuides[scheme.name] && guideLoading !== scheme.name) {
+                                  handleGenerateGuide(scheme);
+                              }
+                          }}
+                          disabled={guideLoading === scheme.name}
+                          className="guide-accordion-trigger"
+                      >
+                          {guideLoading === scheme.name ? (
+                              <div className="flex items-center text-amber-300">
+                                  <span className="loading-spinner-small mr-3"></span>
+                                  Generating Your Guide...
+                              </div>
+                          ) : (
+                              <div className="flex items-center">
+                                  <Bot className="mr-3 h-5 w-5 text-amber-400" />
+                                  AI-Powered Application Guide
+                              </div>
+                          )}
+                      </AccordionTrigger>
+                      <AccordionContent className="guide-accordion-content">
+                          {generatedGuides[scheme.name] ? (
+                              <ApplicationGuideDisplay guide={generatedGuides[scheme.name]} />
+                          ) : guideLoading !== scheme.name ? (
+                              <div className="p-4 text-center text-slate-400">
+                                  Click to generate a personalized step-by-step guide using AI.
+                              </div>
+                          ) : null}
+                      </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+
                 {scheme.applicationGuideLink && (
-                  <a href={scheme.applicationGuideLink} target="_blank" rel="noopener noreferrer" className="premium-btn">
+                  <a href={scheme.applicationGuideLink} target="_blank" rel="noopener noreferrer" className="premium-btn mt-6 flex items-center justify-center gap-3 w-auto px-6 py-3 text-base">
                     <ExternalLink className="h-4 w-4" />
-                    Application Guide
+                    Official Scheme Portal
                   </a>
                 )}
               </div>

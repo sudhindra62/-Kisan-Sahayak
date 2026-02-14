@@ -5,6 +5,11 @@ import {
   type FarmerProfileInput,
   type SchemeAnalysisOutput,
 } from "@/ai/flows/farmer-scheme-eligibility-analyzer";
+import {
+    generateSchemeApplicationGuide,
+    type SchemeApplicationGuideInput,
+    type SchemeApplicationGuideOutput,
+} from "@/ai/flows/scheme-application-guide-generator";
 
 export async function getEligibleSchemes(
   data: FarmerProfileInput
@@ -16,4 +21,16 @@ export async function getEligibleSchemes(
     console.error("Error in getEligibleSchemes server action:", error);
     throw new Error("Failed to communicate with the eligibility analysis service.");
   }
+}
+
+export async function getSchemeApplicationGuide(
+  data: SchemeApplicationGuideInput
+): Promise<SchemeApplicationGuideOutput> {
+    try {
+        const result = await generateSchemeApplicationGuide(data);
+        return result;
+    } catch (error) {
+        console.error("Error in getSchemeApplicationGuide server action:", error);
+        throw new Error("Failed to generate the application guide.");
+    }
 }
