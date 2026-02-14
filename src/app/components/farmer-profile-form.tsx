@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Tractor, MapPin, Droplets, DollarSign, Sprout } from "lucide-react";
+import { Loader2, Tractor, MapPin, Droplets, IndianRupee, Sprout } from "lucide-react";
 import type { FarmerProfileInput } from "@/ai/flows/farmer-scheme-eligibility-analyzer";
 
 const formSchema = z.object({
@@ -85,7 +85,7 @@ export default function FarmerProfileForm({ onSubmit, isLoading }: FarmerProfile
                 name="annualIncome"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2"><DollarSign className="h-4 w-4" />Annual Income</FormLabel>
+                    <FormLabel className="flex items-center gap-2"><IndianRupee className="h-4 w-4" />Annual Income</FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="e.g., 50000" {...field} />
                     </FormControl>
