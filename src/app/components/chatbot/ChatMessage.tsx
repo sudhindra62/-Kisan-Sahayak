@@ -1,6 +1,6 @@
 'use client';
 
-import { Bot, Languages, User, Loader2 } from 'lucide-react';
+import { Bot, Languages, User, Loader2, Volume2, Waveform } from 'lucide-react';
 import type { ChatMessage } from '@/ai/schemas';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,9 @@ type ChatMessageDisplayProps = {
   message: ChatMessage;
   onTranslate: (targetLanguage: string) => void;
   isTranslating: boolean;
+  isAudioAvailable: boolean;
+  isCurrentlyPlaying: boolean;
+  onPlayAudio: () => void;
 };
 
 const targetLanguages = [
@@ -17,7 +20,14 @@ const targetLanguages = [
     'Tamil', 'Bengali', 'Gujarati', 'Punjabi', 'Malayalam'
 ];
 
-export default function ChatMessageDisplay({ message, onTranslate, isTranslating }: ChatMessageDisplayProps) {
+export default function ChatMessageDisplay({ 
+  message, 
+  onTranslate, 
+  isTranslating,
+  isAudioAvailable,
+  isCurrentlyPlaying,
+  onPlayAudio,
+}: ChatMessageDisplayProps) {
   const isUser = message.role === 'user';
   const [popoverOpen, setPopoverOpen] = useState(false);
 
@@ -37,6 +47,20 @@ export default function ChatMessageDisplay({ message, onTranslate, isTranslating
       
       {!isUser && (
         <div className="message-actions">
+          {isAudioAvailable && (
+            <button 
+              className="translate-btn" 
+              title="Play audio"
+              onClick={onPlayAudio}
+              disabled={isCurrentlyPlaying}
+            >
+              {isCurrentlyPlaying ? (
+                 <Waveform className="h-4 w-4 text-amber-400" />
+              ) : (
+                 <Volume2 className="h-4 w-4" />
+              )}
+            </button>
+          )}
           {isTranslating ? (
             <div className="action-spinner">
                 <Loader2 className="h-4 w-4 animate-spin text-slate-400" />

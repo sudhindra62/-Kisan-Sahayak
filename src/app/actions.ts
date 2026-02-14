@@ -19,6 +19,9 @@ import { getChatbotResponse as getChatbotResponseFlow } from "@/ai/flows/farmer-
 import {
     translateText as translateTextFlow,
 } from "@/ai/flows/translate-text";
+import {
+    textToSpeech as textToSpeechFlow,
+} from "@/ai/flows/text-to-speech";
 
 import type {
     FarmerProfileInput,
@@ -33,6 +36,8 @@ import type {
     ChatbotInput,
     TranslateTextInput,
     TranslateTextOutput,
+    TextToSpeechInput,
+    TextToSpeechOutput,
 } from "@/ai/schemas";
 
 
@@ -113,5 +118,15 @@ export async function translateText(data: TranslateTextInput): Promise<Translate
     } catch (error) {
         console.error("Error in translateText server action:", error);
         throw new Error("Failed to translate text.");
+    }
+}
+
+export async function textToSpeech(data: TextToSpeechInput): Promise<TextToSpeechOutput> {
+    try {
+        const result = await textToSpeechFlow(data);
+        return result;
+    } catch (error) {
+        console.error("Error in textToSpeech server action:", error);
+        throw new Error("Failed to convert text to speech.");
     }
 }

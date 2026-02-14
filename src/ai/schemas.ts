@@ -203,3 +203,17 @@ export const TranslateTextOutputSchema = z.object({
   translatedText: z.string().describe('The translated text.'),
 });
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
+
+
+// Schemas for Text-to-Speech
+export const TextToSpeechInputSchema = z.object({
+  text: z.string().describe('The text to be converted to speech.'),
+});
+export type TextToSpeechInput = z.infer<typeof TextToSpeechInputSchema>;
+
+export const TextToSpeechOutputSchema = z.object({
+  audioData: z
+    .string()
+    .describe('A base64 encoded data URI for the generated audio file (WAV format).'),
+});
+export type TextToSpeechOutput = z.infer<typeof TextToSpeechOutputSchema>;

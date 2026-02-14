@@ -3,11 +3,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { ArrowLeft, ArrowUp, Bot, WifiOff } from 'lucide-react';
+import { ArrowLeft, ArrowUp, Bot, WifiOff, Mic, MicOff, Languages } from 'lucide-react';
 import type { ChatMessage, FarmerProfileInput } from '@/ai/schemas';
-import { getChatbotResponse, translateText } from '@/app/actions';
+import { getChatbotResponse, translateText, textToSpeech } from '@/app/actions';
 import ChatMessageDisplay from './ChatMessage';
 import Link from 'next/link';
+
+declare global {
+    interface Window {
+        SpeechRecognition: any;
+        webkitSpeechRecognition: any;
+    }
+}
 
 type ChatWindowProps = {
   farmerProfile: FarmerProfileInput;
@@ -21,17 +28,39 @@ interface DisplayMessage extends ChatMessage {
 const initialMessage: DisplayMessage = { role: 'model', content: 'Hello! I am your KisanSahayak AI assistant. How can I help you today?' };
 initialMessage.originalContent = initialMessage.content;
 
+const speechLanguages = [
+    { code: 'en-IN', name: 'English' },
+    { code: 'hi-IN', name: 'Hindi' },
+    { code: 'kn-IN', name: 'Kannada' },
+]
+
 export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<DisplayMessage[]>([initialMessage]);
   const [isSending, setIsSending] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const chatBodyRef = useRef<HTMLDivElement>(null);
+  const audioPlayerRef = useRef<HTMLAudioElement>(null);
+  const recognitionRef = useRef<any>(null);
+
   const [translatingMessageIndex, setTranslatingMessageIndex] = useState<number | null>(null);
   
+  // Voice state
+  const [speechApiSupported, setSpeechApiSupported] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [speechLang, setSpeechLang] = useState('en-IN');
+  const [audioDataCache, setAudioDataCache] = useState<Record<string, string>>({});
+  const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
+
   const firestore = useFirestore();
 
-  // Effect to track online/offline status
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        setSpeechApiSupported(!!SpeechRecognition);
+    }
+  }, []);
+
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -47,6 +76,9 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
         window.removeEventListener('online', handleOnline);
         window.removeEventListener('offline', handleOffline);
       }
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
     };
   }, []);
 
@@ -56,7 +88,6 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   
   const { data: chatHistoryDoc, isLoading: isHistoryLoading } = useDoc<{ messages: ChatMessage[] }>(chatHistoryRef);
   
-  // Effect to sync messages from Firestore
   useEffect(() => {
     if (chatHistoryDoc?.messages && chatHistoryDoc.messages.length > 0) {
       const displayMessages: DisplayMessage[] = chatHistoryDoc.messages.map(m => ({
@@ -69,18 +100,46 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     }
   }, [chatHistoryDoc]);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     if (chatBodyRef.current) {
       chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
     }
   }, [messages, isSending, translatingMessageIndex]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isSending || !isOnline) return;
+  const handleTextToSpeech = async (originalContent: string) => {
+    if (!originalContent || audioDataCache[originalContent]) {
+      return audioDataCache[originalContent] || null;
+    }
+    try {
+        const response = await textToSpeech({ text: originalContent });
+        setAudioDataCache(prev => ({...prev, [originalContent]: response.audioData}));
+        return response.audioData;
+    } catch (error) {
+        console.error("TTS Error:", error);
+        return null;
+    }
+  }
 
-    const userMessage: DisplayMessage = { role: 'user', content: input };
+  const playAudio = async (originalContent: string | undefined) => {
+    if (!originalContent || !audioPlayerRef.current) return;
+    
+    setCurrentlyPlaying(originalContent);
+    const audioSrc = await handleTextToSpeech(originalContent);
+    
+    if (audioSrc && audioPlayerRef.current) {
+        audioPlayerRef.current.src = audioSrc;
+        audioPlayerRef.current.play().catch(e => console.error("Audio play failed", e));
+    } else {
+        setCurrentlyPlaying(null);
+    }
+  }
+
+  const handleSendMessage = async (e?: React.FormEvent, messageContent?: string) => {
+    if (e) e.preventDefault();
+    const content = (messageContent || input).trim();
+    if (!content || isSending || !isOnline) return;
+
+    const userMessage: DisplayMessage = { role: 'user', content };
     const newMessages: DisplayMessage[] = [...messages, userMessage];
     
     setMessages(newMessages); // Optimistically update UI
@@ -88,7 +147,6 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     setIsSending(true);
 
     try {
-        // The history sent to the AI should be the original English content
         const historyForAI = messages.map(m => ({
             role: m.role,
             content: m.originalContent || m.content,
@@ -97,7 +155,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
         const aiResponse = await getChatbotResponse({
             farmerProfile,
             history: historyForAI, 
-            message: input,
+            message: content,
         });
 
         const aiMessage: DisplayMessage = { 
@@ -110,7 +168,6 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
         setMessages(finalMessages); // Update UI with AI response
         
         if (chatHistoryRef) {
-            // Save only the original English content to Firestore
             const historyToSave = finalMessages.map(m => ({
                 role: m.role,
                 content: m.originalContent || m.content
@@ -121,6 +178,8 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
                 updatedAt: new Date().toISOString()
             }, { merge: true });
         }
+        
+        playAudio(aiResponse);
 
     } catch (error) {
       console.error("Failed to get chat response:", error);
@@ -165,11 +224,46 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     }
   };
 
+  const handleMicClick = () => {
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    
+    if (!speechApiSupported) {
+        alert("Sorry, your browser doesn't support speech recognition.");
+        return;
+    }
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognitionRef.current = new SpeechRecognition();
+    recognitionRef.current.lang = speechLang;
+    recognitionRef.current.continuous = false;
+    recognitionRef.current.interimResults = true;
+
+    recognitionRef.current.onstart = () => setIsRecording(true);
+    recognitionRef.current.onend = () => setIsRecording(false);
+    recognitionRef.current.onerror = (event: any) => console.error('Speech recognition error', event.error);
+    
+    recognitionRef.current.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+            .map((result: any) => result[0])
+            .map((result: any) => result.transcript)
+            .join('');
+        setInput(transcript);
+        if (event.results[0].isFinal) {
+            handleSendMessage(undefined, transcript);
+        }
+    };
+    
+    recognitionRef.current.start();
+  };
 
   const isChatDisabled = isSending || isHistoryLoading || !isOnline;
 
   return (
     <div className="chat-page-container">
+      <audio ref={audioPlayerRef} onEnded={() => setCurrentlyPlaying(null)} className="hidden" />
       <div className="chat-header">
         <Link href="/" className="chat-back-btn">
             <ArrowLeft className="h-5 w-5" />
@@ -196,6 +290,9 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             message={msg} 
             isTranslating={translatingMessageIndex === index}
             onTranslate={(lang) => handleTranslateMessage(index, lang)}
+            isAudioAvailable={msg.role === 'model' && !!msg.originalContent}
+            isCurrentlyPlaying={currentlyPlaying === msg.originalContent}
+            onPlayAudio={() => playAudio(msg.originalContent)}
           />
         ))}
          {isSending && (
@@ -214,14 +311,32 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
 
       <div className="chat-footer">
         <form onSubmit={handleSendMessage} className="chat-input-form">
+          <div className="voice-lang-selector">
+            <Languages className="h-4 w-4" />
+            <select
+                value={speechLang}
+                onChange={(e) => setSpeechLang(e.target.value)}
+                className="lang-select-native"
+                disabled={isRecording}
+            >
+                {speechLanguages.map(lang => (
+                    <option key={lang.code} value={lang.code}>{lang.name}</option>
+                ))}
+            </select>
+          </div>
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={!isOnline ? "You are offline. Please reconnect." : "Ask me anything..."}
+            placeholder={!isOnline ? "You are offline. Please reconnect." : (isRecording ? "Listening..." : "Ask me anything...")}
             className="chat-input"
             disabled={isChatDisabled}
           />
+          {speechApiSupported && (
+            <button type="button" className={`chat-tool-btn ${isRecording ? 'is-recording' : ''}`} onClick={handleMicClick} disabled={isChatDisabled}>
+                {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+            </button>
+          )}
           <button type="submit" className="chat-send-btn" disabled={!input.trim() || isChatDisabled}>
             <ArrowUp className="h-5 w-5" />
           </button>
