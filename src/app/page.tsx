@@ -3,13 +3,14 @@
 import * as React from "react";
 import { type FarmerProfileInput, type MatchedScheme } from "@/ai/schemas";
 import { type FarmerSummaryOutput } from "@/ai/flows/farmer-summary-generator";
-import { getEligibleSchemes, getFarmerSummary } from "@/app/actions";
+import { getEligibleSchemes, getFarmerSummary, getPredictedSchemes } from "@/app/actions";
 import FarmerProfileForm from "@/app/components/farmer-profile-form";
 import SchemeResults from "@/app/components/scheme-results";
 import SummaryReport from "@/app/components/summary-report";
 import DocumentReadinessChecker from "@/app/components/document-readiness-checker";
 import { useToast } from "@/hooks/use-toast";
-import { Logo } from "@/app/components/icons";
+import type { PredictiveAnalysisOutput } from "@/ai/flows/predictive-scheme-analyzer";
+import PredictiveAnalysis from "@/app/components/predictive-analysis";
 
 type ResultsState = {
     matchedSchemes: MatchedScheme[];
@@ -28,38 +29,59 @@ export default function Home() {
   const [farmerProfile, setFarmerProfile] = React.useState<FarmerProfileInput | null>(null);
   const [summary, setSummary] = React.useState<FarmerSummaryOutput | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = React.useState(false);
+  const [predictions, setPredictions] = React.useState<PredictiveAnalysisOutput | null>(null);
+  const [isPredictionsLoading, setIsPredictionsLoading] = React.useState(false);
   const { toast } = useToast();
 
   const handleFormSubmit = async (data: FarmerProfileInput) => {
     setIsLoading(true);
     setResults(null);
     setSummary(null);
+    setPredictions(null);
     setFarmerProfile(data);
     try {
       const eligibilityResults = await getEligibleSchemes(data);
       setResults(eligibilityResults);
       setIsLoading(false); // Stop main loading indicator
 
-      // Now, generate the summary
+      // Now, generate the summary and predictions in parallel
       if (eligibilityResults && (eligibilityResults.matchedSchemes.length > 0 || (eligibilityResults.nearMisses && eligibilityResults.nearMisses.length > 0))) {
         setIsSummaryLoading(true);
-        try {
-            const summaryResult = await getFarmerSummary({
-                farmerProfile: data,
-                analysisResults: eligibilityResults,
-            });
-            setSummary(summaryResult);
-        } catch (summaryError) {
-            console.error("Error generating summary:", summaryError);
-            // Optionally show a toast for summary failure, but don't block the main results
+        setIsPredictionsLoading(true);
+
+        const summaryPromise = getFarmerSummary({
+            farmerProfile: data,
+            analysisResults: eligibilityResults,
+        }).catch(err => {
+            console.error("Error generating summary:", err);
             toast({
                 variant: "destructive",
                 title: "Warning",
                 description: "Could not generate the final summary report.",
             });
-        } finally {
-            setIsSummaryLoading(false);
-        }
+            return null; // Return null on error to not break Promise.all
+        });
+
+        const predictionsPromise = getPredictedSchemes(data).catch(err => {
+            console.error("Error generating predictions:", err);
+            toast({
+                variant: "destructive",
+                title: "Warning",
+                description: "Could not generate future scheme predictions.",
+            });
+            return null; // Return null on error
+        });
+        
+        const [summaryResult, predictionsResult] = await Promise.all([
+            summaryPromise,
+            predictionsPromise
+        ]);
+
+        if (summaryResult) setSummary(summaryResult);
+        if (predictionsResult) setPredictions(predictionsResult);
+
+        setIsSummaryLoading(false);
+        setIsPredictionsLoading(false);
       }
 
     } catch (error) {
@@ -90,6 +112,8 @@ export default function Home() {
             }
 
             { (isSummaryLoading || summary) && <SummaryReport summary={summary} isLoading={isSummaryLoading} /> }
+
+            { (isPredictionsLoading || predictions) && <PredictiveAnalysis predictions={predictions} isLoading={isPredictionsLoading} /> }
         </div>
     </main>
   );

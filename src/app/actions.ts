@@ -20,6 +20,10 @@ import {
     type DocumentReadinessInput,
     type DocumentReadinessOutput,
 } from "@/ai/flows/document-readiness-checker";
+import {
+    predictUpcomingSchemes,
+    type PredictiveAnalysisOutput,
+} from "@/ai/flows/predictive-scheme-analyzer";
 
 export async function getEligibleSchemes(
   data: FarmerProfileInput
@@ -66,5 +70,17 @@ export async function getDocumentReadiness(
     } catch (error) {
         console.error("Error in getDocumentReadiness server action:", error);
         throw new Error("Failed to check document readiness.");
+    }
+}
+
+export async function getPredictedSchemes(
+    data: FarmerProfileInput
+): Promise<PredictiveAnalysisOutput> {
+    try {
+        const result = await predictUpcomingSchemes(data);
+        return result;
+    } catch (error) {
+        console.error("Error in getPredictedSchemes server action:", error);
+        throw new Error("Failed to generate scheme predictions.");
     }
 }

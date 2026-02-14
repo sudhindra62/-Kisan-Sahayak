@@ -77,3 +77,15 @@ export const DocumentReadinessOutputSchema = z.object({
   optional_alternatives: z.array(z.string()).describe("Suggestions for alternative documents or guidance on how to obtain the missing ones."),
   readiness_status: z.string().describe("A summary status of the farmer's document readiness (e.g., 'Ready to Apply', 'Missing Key Documents')."),
 });
+
+// Schemas for Predictive Scheme Analyzer
+export const PredictedSchemeSchema = z.object({
+  predicted_scheme_category: z.string().describe('The category of the predicted upcoming scheme (e.g., "Drought Relief", "Kharif Crop Insurance").'),
+  probability_of_relevance: z.enum(['High', 'Medium', 'Low']).describe('The estimated probability that a scheme in this category will become relevant.'),
+  reasoning: z.string().describe('A brief explanation for the prediction, citing factors like crop cycle, state policies, or historical trends.'),
+  preparation_advice: z.string().describe('Actionable advice for the farmer to prepare for this potential future scheme.'),
+});
+
+export const PredictiveAnalysisOutputSchema = z.object({
+  predictions: z.array(PredictedSchemeSchema).describe('A list of predicted scheme categories that may become relevant in the next 6 months.'),
+});
