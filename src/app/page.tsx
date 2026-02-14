@@ -8,13 +8,16 @@ import SchemeResults from "@/app/components/scheme-results";
 import { useToast } from "@/hooks/use-toast";
 
 type ResultsState = {
-  eligibleSchemes: {
-    name: string;
-    benefits: string;
-    eligibilitySummary: string;
-    applicationGuideLink?: string | undefined;
+  matchedSchemes: {
+      name: string;
+      benefits: string;
+      semantic_similarity_score: number;
+      relevance_reason: string;
+      is_possibly_relevant: boolean;
+      applicationGuideLink?: string | undefined;
   }[];
 } | null;
+
 
 export default function Home() {
   const [isLoading, setIsLoading] = React.useState(false);

@@ -3,10 +3,12 @@
 import { ExternalLink, Info, Leaf } from "lucide-react";
 
 type Results = {
-  eligibleSchemes: {
+  matchedSchemes: {
     name: string;
     benefits: string;
-    eligibilitySummary: string;
+    semantic_similarity_score: number;
+    relevance_reason: string;
+    is_possibly_relevant: boolean;
     applicationGuideLink?: string | undefined;
   }[];
 } | null;
@@ -36,7 +38,7 @@ export default function SchemeResults({ results, isLoading }: SchemeResultsProps
   if (isLoading) {
     return (
       <section className="results-container w-full">
-        <h2 className="results-title">Checking Eligibility...</h2>
+        <h2 className="results-title">Analyzing Profile...</h2>
         <LoadingSkeleton />
       </section>
     );
@@ -48,13 +50,23 @@ export default function SchemeResults({ results, isLoading }: SchemeResultsProps
 
   return (
     <section className="results-container w-full">
-      {results.eligibleSchemes.length > 0 ? (
+      {results.matchedSchemes.length > 0 ? (
         <>
-          <h2 className="results-title">Eligible Schemes Found</h2>
+          <h2 className="results-title">Relevant Schemes Found</h2>
           <div className="space-y-5">
-            {results.eligibleSchemes.map((scheme, index) => (
+            {results.matchedSchemes.map((scheme, index) => (
               <div className="result-card" key={index}>
-                <h3><Leaf className="mr-3 text-current h-6 w-6" /> {scheme.name}</h3>
+                <div className="result-card-header">
+                    <h3><Leaf className="mr-3 text-current h-6 w-6" /> {scheme.name}</h3>
+                    <span className="score-badge">{scheme.semantic_similarity_score}% Match</span>
+                </div>
+
+                {scheme.is_possibly_relevant && (
+                  <div className="possible-relevance-badge">
+                    <Info className="h-4 w-4 mr-2" />
+                    Possibly Relevant – Review Recommended
+                  </div>
+                )}
                 
                 <div className="result-section">
                   <h4>Benefits</h4>
@@ -62,8 +74,8 @@ export default function SchemeResults({ results, isLoading }: SchemeResultsProps
                 </div>
 
                 <div className="result-section">
-                  <h4>Why you are eligible</h4>
-                  <p>{scheme.eligibilitySummary}</p>
+                  <h4>Relevance Analysis</h4>
+                  <p>{scheme.relevance_reason}</p>
                 </div>
                 
                 {scheme.applicationGuideLink && (

@@ -286,13 +286,20 @@ select {
   box-shadow: 0 25px 60px rgba(0,0,0,0.6);
 }
 
+.result-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 35px;
+}
+
 .result-card h3 {
   font-size: 28px;
   font-weight: 600;
-  margin-bottom: 35px;
   color: #d6a93c;
   display: flex;
   align-items: center;
+  margin-bottom: 0;
 }
 
 .result-section h4 {
@@ -370,4 +377,28 @@ select {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.score-badge {
+  background: rgba(214, 169, 60, 0.2);
+  color: #d6a93c;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid rgba(214, 169, 60, 0.5);
+  flex-shrink: 0;
+}
+
+.possible-relevance-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 245, 157, 0.1);
+  color: #fff59d;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 400;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 245, 157, 0.2);
 }

@@ -3,12 +3,12 @@
 import {
   analyzeFarmerSchemeEligibility,
   type FarmerProfileInput,
-  type EligibleSchemesOutput,
+  type SchemeAnalysisOutput,
 } from "@/ai/flows/farmer-scheme-eligibility-analyzer";
 
 export async function getEligibleSchemes(
   data: FarmerProfileInput
-): Promise<EligibleSchemesOutput> {
+): Promise<SchemeAnalysisOutput> {
   try {
     const result = await analyzeFarmerSchemeEligibility(data);
     return result;

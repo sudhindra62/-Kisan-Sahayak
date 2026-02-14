@@ -1,10 +1,10 @@
 'use server';
 /**
- * @fileOverview Analyzes a farmer's profile against government schemes to determine eligibility.
+ * @fileOverview Analyzes a farmer's profile against government schemes to determine eligibility using semantic search.
  *
  * - analyzeFarmerSchemeEligibility - A function that handles the scheme eligibility analysis process.
  * - FarmerProfileInput - The input type for the analyzeFarmerSchemeEligibility function.
- * - EligibleSchemesOutput - The return type for the analyzeFarmerSchemeEligibility function.
+ * - SchemeAnalysisOutput - The return type for the analyzeFarmerSchemeEligibility function.
  */
 
 import { ai } from '@/ai/genkit';
@@ -32,18 +32,43 @@ const GovernmentSchemeSchema = z.object({
 });
 type GovernmentScheme = z.infer<typeof GovernmentSchemeSchema>; // Not exported, used internally.
 
-// Output Schema for eligible schemes
-const EligibleSchemeOutputSchema = z.object({
-  name: z.string().describe('The name of the eligible government scheme.'),
+
+const MatchedSchemeSchema = z.object({
+  name: z.string().describe('The name of the government scheme.'),
   benefits: z.string().describe('A summary of the benefits provided by the scheme.'),
-  eligibilitySummary: z.string().describe('A concise summary of why the farmer is eligible for this scheme, based on their profile and the scheme criteria.'),
-  applicationGuideLink: z.string().optional().describe('Link to the official application guide or portal.'),
+  semantic_similarity_score: z
+    .number()
+    .min(0)
+    .max(100)
+    .describe(
+      "A score from 0-100 indicating the semantic relevance of the scheme to the farmer's profile. Higher scores mean better relevance."
+    ),
+  relevance_reason: z
+    .string()
+    .describe(
+      'A detailed explanation of why the scheme is considered relevant, referencing both the farmer\'s profile and the scheme\'s criteria. If possibly relevant, this should state what needs to be reviewed.'
+    ),
+  is_possibly_relevant: z
+    .boolean()
+    .describe(
+      'True if the scheme is only possibly relevant and requires the user to review the details.'
+    ),
+  applicationGuideLink: z
+    .string()
+    .optional()
+    .describe('Link to the official application guide or portal.'),
 });
 
-const EligibleSchemesOutputSchema = z.object({
-  eligibleSchemes: z.array(EligibleSchemeOutputSchema).describe('A list of government schemes for which the farmer is eligible.'),
+// Output Schema for the analysis
+const SchemeAnalysisOutputSchema = z.object({
+  matchedSchemes: z
+    .array(MatchedSchemeSchema)
+    .describe(
+      "A list of government schemes that are semantically relevant to the farmer's profile, sorted by relevance score."
+    ),
 });
-export type EligibleSchemesOutput = z.infer<typeof EligibleSchemesOutputSchema>;
+export type SchemeAnalysisOutput = z.infer<typeof SchemeAnalysisOutputSchema>;
+
 
 // Define the tool to fetch government schemes
 const getGovernmentSchemes = ai.defineTool(
@@ -101,30 +126,31 @@ const farmerSchemeEligibilityPrompt = ai.definePrompt({
       schemes: z.array(GovernmentSchemeSchema),
     }),
   },
-  output: { schema: EligibleSchemesOutputSchema },
-  tools: [getGovernmentSchemes], // Making the LLM aware of the tool, though it's called in the flow.
-  prompt: `You are an expert government scheme eligibility analyzer for farmers. Your task is to evaluate a farmer's profile against a list of available government agricultural schemes and determine which ones they are eligible for.
+  output: { schema: SchemeAnalysisOutputSchema },
+  prompt: `You are an advanced AI assistant specializing in semantic analysis for agricultural schemes. Your task is to evaluate a farmer's profile against a list of government schemes using semantic matching to determine relevance.
 
-  Farmer's Profile:
-  - Land Size: {{{farmerProfile.landSize}}} acres
-  - Location: State - {{{farmerProfile.location.state}}}, District - {{{farmerProfile.location.district}}}
-  - Crop Type: {{{farmerProfile.cropType}}}
-  - Irrigation Type: {{{farmerProfile.irrigationType}}}
-  - Annual Income: {{{farmerProfile.annualIncome}}}
+- **Semantic Search:** Understand synonyms and related concepts (e.g., 'rice' is similar to 'paddy'). Tolerate minor spelling mistakes in the user input. Match schemes even if the wording differs but the meaning is similar.
+- **Scoring:** For each scheme, calculate a \`semantic_similarity_score\` from 0 to 100 based on how well the farmer's profile matches the scheme's intent and criteria. A score of 100 is a perfect match. A score below 50 should be discarded.
+- **Reasoning:** Provide a clear \`relevance_reason\` for each match. This reason should explain the connection between the farmer's profile (land size, location, crop, income) and the scheme's eligibility criteria.
+- **Possible Relevance:** If a scheme's relevance is uncertain or depends on specific criteria not fully covered in the profile (e.g., being part of a specific farmer group, detailed income brackets, exact location definitions like 'drought-prone area'), mark \`is_possibly_relevant\` as true. In the \`relevance_reason\` for such cases, clearly state what the farmer needs to review.
 
-  Available Government Schemes:
-  {{#each schemes}}
-  ---
-  Scheme Name: {{{this.name}}}
-  Benefits: {{{this.benefits}}}
-  Eligibility Criteria: {{{this.eligibilityCriteria}}}
-  Application Guide Link: {{{this.applicationGuideLink}}}
-  {{/each}}
+Farmer's Profile:
+- Land Size: {{{farmerProfile.landSize}}} acres
+- Location: State - {{{farmerProfile.location.state}}}, District - {{{farmerProfile.location.district}}}
+- Crop Type: {{{farmerProfile.cropType}}}
+- Irrigation Type: {{{farmerProfile.irrigationType}}}
+- Annual Income: {{{farmerProfile.annualIncome}}}
 
-  Analyze the farmer's profile against the eligibility criteria of each scheme. For each scheme the farmer is eligible for, provide the scheme's name, benefits, a concise summary of *why* they are eligible (referencing their profile details), and the application guide link if available.
+Available Government Schemes:
+{{#each schemes}}
+---
+Scheme Name: {{{this.name}}}
+Benefits: {{{this.benefits}}}
+Eligibility Criteria: {{{this.eligibilityCriteria}}}
+Application Guide Link: {{{this.applicationGuideLink}}}
+{{/each}}
 
-  If a farmer is not eligible for any scheme, return an empty array for eligibleSchemes.
-  `
+Analyze the farmer's profile against each scheme. Return a list of all relevant schemes (direct and possible matches), sorted from the highest \`semantic_similarity_score\` to the lowest. If no schemes are relevant, return an empty array for matchedSchemes.`
 });
 
 // Define the Genkit flow
@@ -132,7 +158,7 @@ const farmerSchemeEligibilityAnalyzerFlow = ai.defineFlow(
   {
     name: 'farmerSchemeEligibilityAnalyzerFlow',
     inputSchema: FarmerProfileInputSchema,
-    outputSchema: EligibleSchemesOutputSchema,
+    outputSchema: SchemeAnalysisOutputSchema,
   },
   async (input) => {
     // Call the tool to get the list of government schemes
@@ -150,6 +176,6 @@ const farmerSchemeEligibilityAnalyzerFlow = ai.defineFlow(
 // Exported wrapper function
 export async function analyzeFarmerSchemeEligibility(
   input: FarmerProfileInput
-): Promise<EligibleSchemesOutput> {
+): Promise<SchemeAnalysisOutput> {
   return farmerSchemeEligibilityAnalyzerFlow(input);
 }
