@@ -48,7 +48,7 @@ export const SchemeAnalysisOutputSchema = z.object({
   eligible_schemes: z
     .array(EligibleSchemeSchema)
     .describe(
-      "A list of government schemes that are semantically relevant to the farmer's profile, sorted by relevance score."
+      "A list of government schemes that are semantically relevant to the farmer's profile, sorted by relevance."
     ),
   nearMisses: z.array(NearMissSchemeSchema).describe('A list of schemes where the farmer is close to qualifying, with suggestions for improvement.'),
 });
@@ -82,6 +82,25 @@ export const PredictiveAnalysisOutputSchema = z.object({
   predictions: z.array(PredictedSchemeSchema).describe('A list of predicted scheme categories that may become relevant in the next 6 months.'),
 });
 
+// Schema for Central Relief Schemes
+export const CentralReliefSchemeSchema = z.object({
+    scheme_name: z.string(),
+    scheme_type: z.string(),
+    eligibility_land_min: z.number(),
+    eligibility_land_max: z.number(),
+    eligible_crop_types: z.array(z.string()),
+    eligible_damage_types: z.array(z.string()),
+    applicable_states: z.string(),
+    base_compensation_amount: z.number(),
+    subsidy_category: z.string(),
+    description: z.string(),
+    required_documents: z.array(z.string()),
+    priority_group: z.string(),
+    central_government_scheme: z.boolean(),
+});
+export type CentralReliefScheme = z.infer<typeof CentralReliefSchemeSchema>;
+
+
 // Schemas for Chatbot
 export const ChatMessageSchema = z.object({
   role: z.enum(['user', 'model']),
@@ -95,3 +114,4 @@ export const ChatbotInputSchema = z.object({
     message: z.string().describe('The latest message from the user.'),
 });
 export type ChatbotInput = z.infer<typeof ChatbotInputSchema>;
+
