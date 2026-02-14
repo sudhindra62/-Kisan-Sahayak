@@ -41,25 +41,17 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-4 sm:p-6 md:p-8">
+    <div className="flex flex-col items-center min-h-screen p-4">
       <Header />
-      <main className="w-full max-w-4xl mx-auto flex-grow">
-        <section className="text-center mb-8 md:mb-12">
-          <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary mb-3">
-            Unlock Your Farm's Potential
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            Enter your details below to discover government schemes tailored to your needs and get guidance on how to apply.
-          </p>
-        </section>
+      <main className="w-full max-w-4xl mx-auto flex-grow flex flex-col items-center gap-8 md:gap-12">
+        <p className="text-lg md:text-xl text-center text-muted-foreground max-w-3xl mx-auto">
+          Enter your details below to discover government schemes tailored to your needs and get guidance on how to apply.
+        </p>
 
         <FarmerProfileForm onSubmit={handleFormSubmit} isLoading={isLoading} />
         
         <SchemeResults results={results} isLoading={isLoading} />
       </main>
-      <footer className="w-full max-w-4xl mx-auto py-6 text-center text-muted-foreground text-sm">
-        <p>&copy; {new Date().getFullYear()} KisanSahayak. All rights reserved.</p>
-      </footer>
     </div>
   );
 }

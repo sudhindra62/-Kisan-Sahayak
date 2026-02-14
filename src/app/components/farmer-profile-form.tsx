@@ -56,9 +56,9 @@ export default function FarmerProfileForm({ onSubmit, isLoading }: FarmerProfile
   });
 
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-lg border-2 border-primary/10">
+    <Card className="w-full max-w-4xl mx-auto bg-card/5 backdrop-blur-xl border border-white/10 shadow-xl">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl text-primary flex items-center gap-2">
+        <CardTitle className="font-headline text-2xl text-white flex items-center gap-3">
           <Tractor className="h-6 w-6" />
           Farmer Profile
         </CardTitle>
@@ -66,16 +66,19 @@ export default function FarmerProfileForm({ onSubmit, isLoading }: FarmerProfile
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
               <FormField
                 control={form.control}
                 name="landSize"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2"><Sprout className="h-4 w-4" />Land Size (in acres)</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="e.g., 5" {...field} />
-                    </FormControl>
+                    <FormLabel>Land Size (in acres)</FormLabel>
+                    <div className="relative flex items-center">
+                        <Sprout className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <FormControl>
+                          <Input type="number" placeholder="e.g., 5" {...field} className="pl-10" />
+                        </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -85,10 +88,13 @@ export default function FarmerProfileForm({ onSubmit, isLoading }: FarmerProfile
                 name="annualIncome"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2"><IndianRupee className="h-4 w-4" />Annual Income</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="e.g., 50000" {...field} />
-                    </FormControl>
+                    <FormLabel>Annual Income</FormLabel>
+                     <div className="relative flex items-center">
+                        <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <FormControl>
+                          <Input type="number" placeholder="e.g., 50000" {...field} className="pl-10" />
+                        </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -98,10 +104,13 @@ export default function FarmerProfileForm({ onSubmit, isLoading }: FarmerProfile
                 name="location.state"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2"><MapPin className="h-4 w-4" />State</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Maharashtra" {...field} />
-                    </FormControl>
+                    <FormLabel>State</FormLabel>
+                     <div className="relative flex items-center">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <FormControl>
+                          <Input placeholder="e.g., Maharashtra" {...field} className="pl-10" />
+                        </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -111,10 +120,13 @@ export default function FarmerProfileForm({ onSubmit, isLoading }: FarmerProfile
                 name="location.district"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2"><MapPin className="h-4 w-4" />District</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Pune" {...field} />
-                    </FormControl>
+                    <FormLabel>District</FormLabel>
+                     <div className="relative flex items-center">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <FormControl>
+                         <Input placeholder="e.g., Pune" {...field} className="pl-10" />
+                        </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -124,10 +136,13 @@ export default function FarmerProfileForm({ onSubmit, isLoading }: FarmerProfile
                 name="cropType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2"><Sprout className="h-4 w-4" />Primary Crop Type</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Wheat" {...field} />
-                    </FormControl>
+                    <FormLabel>Primary Crop Type</FormLabel>
+                    <div className="relative flex items-center">
+                        <Sprout className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <FormControl>
+                         <Input placeholder="e.g., Wheat" {...field} className="pl-10" />
+                        </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -137,32 +152,35 @@ export default function FarmerProfileForm({ onSubmit, isLoading }: FarmerProfile
                 name="irrigationType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2"><Droplets className="h-4 w-4" />Irrigation Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select an irrigation type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Rainfed">Rainfed</SelectItem>
-                        <SelectItem value="Well">Well</SelectItem>
-                        <SelectItem value="Canal">Canal</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Irrigation Type</FormLabel>
+                    <div className="relative flex items-center">
+                        <Droplets className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="pl-10">
+                              <SelectValue placeholder="Select an irrigation type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Rainfed">Rainfed</SelectItem>
+                            <SelectItem value="Well">Well</SelectItem>
+                            <SelectItem value="Canal">Canal</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isLoading} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold">
+            <div className="flex justify-end pt-4">
+              <Button type="submit" disabled={isLoading} size="lg" className="w-full md:w-auto bg-neutral-900 text-white border-neutral-700 border hover:bg-neutral-800 shadow-lg transition-colors duration-300">
                 {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     Analyzing...
-                  </>
+                  </div>
                 ) : (
                   "Find Schemes"
                 )}
