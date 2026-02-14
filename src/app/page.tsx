@@ -4,7 +4,6 @@ import * as React from "react";
 import { type FarmerProfileInput } from "@/ai/flows/farmer-scheme-eligibility-analyzer";
 import { getEligibleSchemes } from "@/app/actions";
 import FarmerProfileForm from "@/app/components/farmer-profile-form";
-import Header from "@/app/components/header";
 import SchemeResults from "@/app/components/scheme-results";
 import { useToast } from "@/hooks/use-toast";
 
@@ -41,17 +40,15 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-4">
-      <Header />
-      <main className="w-full max-w-4xl mx-auto flex-grow flex flex-col items-center gap-8 md:gap-12">
-        <p className="text-lg md:text-xl text-center text-muted-foreground max-w-3xl mx-auto">
-          Enter your details below to discover government schemes tailored to your needs and get guidance on how to apply.
-        </p>
-
-        <FarmerProfileForm onSubmit={handleFormSubmit} isLoading={isLoading} />
-        
-        <SchemeResults results={results} isLoading={isLoading} />
-      </main>
-    </div>
+    <main>
+        <div className="form-container">
+            <h1>🚜 Farmer Profile</h1>
+            <p style={{textAlign: 'center', color: 'rgba(255, 255, 255, 0.8)', maxWidth: '600px', margin: '-20px auto 40px auto', lineHeight: '1.6'}}>
+                Enter your details below to discover government schemes tailored to your needs and get guidance on how to apply.
+            </p>
+            <FarmerProfileForm onSubmit={handleFormSubmit} isLoading={isLoading} />
+            <SchemeResults results={results} isLoading={isLoading} />
+        </div>
+    </main>
   );
 }

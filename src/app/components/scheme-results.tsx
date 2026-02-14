@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle2, ExternalLink, Info, Leaf } from "lucide-react";
+import { ExternalLink, Info, Leaf } from "lucide-react";
 
 type Results = {
   eligibleSchemes: {
@@ -26,17 +17,17 @@ type SchemeResultsProps = {
 };
 
 const LoadingSkeleton = () => (
-  <div className="space-y-4 w-full">
-    {[...Array(3)].map((_, i) => (
-      <Card key={i} className="bg-card/5 backdrop-blur-xl border shadow-xl">
-        <CardHeader>
-          <Skeleton className="h-6 w-3/4 bg-white/10" />
-        </CardHeader>
-        <CardContent className="space-y-2 pt-6">
-          <Skeleton className="h-4 w-full bg-white/10" />
-          <Skeleton className="h-4 w-5/6 bg-white/10" />
-        </CardContent>
-      </Card>
+  <div className="space-y-5 w-full">
+    {[...Array(2)].map((_, i) => (
+      <div key={i} className="result-card animate-pulse" style={{ background: 'rgba(255, 255, 255, 0.03)'}}>
+        <div className="h-6 w-3/4 rounded-md bg-white/10 mb-6"></div>
+        <div className="h-4 w-1/4 rounded-md bg-white/10 mb-2"></div>
+        <div className="h-4 w-full rounded-md bg-white/10 mb-1"></div>
+        <div className="h-4 w-5/6 rounded-md bg-white/10 mb-4"></div>
+        <div className="h-4 w-1/4 rounded-md bg-white/10 mb-2"></div>
+        <div className="h-4 w-full rounded-md bg-white/10 mb-1"></div>
+        <div className="h-4 w-5/6 rounded-md bg-white/10"></div>
+      </div>
     ))}
   </div>
 );
@@ -44,8 +35,8 @@ const LoadingSkeleton = () => (
 export default function SchemeResults({ results, isLoading }: SchemeResultsProps) {
   if (isLoading) {
     return (
-      <section className="mt-8 md:mt-0 w-full max-w-4xl text-center">
-        <h2 className="font-headline text-2xl md:text-3xl font-bold mb-6 text-foreground">Checking Eligibility...</h2>
+      <section className="results-container w-full">
+        <h2 className="results-title">Checking Eligibility...</h2>
         <LoadingSkeleton />
       </section>
     );
@@ -56,57 +47,43 @@ export default function SchemeResults({ results, isLoading }: SchemeResultsProps
   }
 
   return (
-    <section className="w-full max-w-4xl animate-in fade-in duration-500">
+    <section className="results-container w-full">
       {results.eligibleSchemes.length > 0 ? (
-        <div className="space-y-6">
-          <h2 className="font-headline text-2xl md:text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-300">
-            Eligible Schemes Found
-          </h2>
-          <Accordion type="single" collapsible className="w-full space-y-4">
+        <>
+          <h2 className="results-title">Eligible Schemes Found</h2>
+          <div className="space-y-5">
             {results.eligibleSchemes.map((scheme, index) => (
-              <AccordionItem value={`item-${index}`} key={index} className="border-b-0">
-                <Card className="bg-card/5 backdrop-blur-xl border shadow-xl hover:border-primary/50 transition-all duration-300">
-                  <AccordionTrigger className="p-6 text-lg font-semibold font-headline hover:no-underline text-foreground">
-                    <div className="flex items-center gap-3 text-left">
-                       <Leaf className="h-6 w-6 text-primary flex-shrink-0" />
-                       {scheme.name}
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="p-6 pt-0">
-                    <div className="space-y-4 text-left">
-                      <div>
-                        <h4 className="font-bold text-primary mb-2">Benefits</h4>
-                        <p className="text-muted-foreground">{scheme.benefits}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-primary mb-2">Why you are eligible</h4>
-                        <p className="text-muted-foreground">{scheme.eligibilitySummary}</p>
-                      </div>
-                      {scheme.applicationGuideLink && (
-                        <div className="pt-2">
-                           <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg transition-colors duration-300">
-                            <a href={scheme.applicationGuideLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                              <ExternalLink className="h-4 w-4" />
-                              Application Guide
-                            </a>
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </AccordionContent>
-                </Card>
-              </AccordionItem>
+              <div className="result-card" key={index}>
+                <h3><Leaf className="mr-3 text-current h-6 w-6" /> {scheme.name}</h3>
+                
+                <div className="result-section">
+                  <h4>Benefits</h4>
+                  <p>{scheme.benefits}</p>
+                </div>
+
+                <div className="result-section">
+                  <h4>Why you are eligible</h4>
+                  <p>{scheme.eligibilitySummary}</p>
+                </div>
+                
+                {scheme.applicationGuideLink && (
+                  <a href={scheme.applicationGuideLink} target="_blank" rel="noopener noreferrer" className="premium-btn">
+                    <ExternalLink className="h-4 w-4" />
+                    Application Guide
+                  </a>
+                )}
+              </div>
             ))}
-          </Accordion>
-        </div>
+          </div>
+        </>
       ) : (
-        <Card className="text-center p-8 w-full bg-card/5 backdrop-blur-xl border shadow-xl">
-            <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h2 className="font-headline text-2xl font-bold mb-2 text-foreground">No Schemes Found</h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
-                Based on the profile provided, we couldn't find any matching government schemes at the moment.
-            </p>
-        </Card>
+        <div className="no-results-card">
+          <Info className="icon" />
+          <h2>No Schemes Found</h2>
+          <p>
+            Based on the profile provided, we couldn't find any matching government schemes at the moment.
+          </p>
+        </div>
       )}
     </section>
   );
