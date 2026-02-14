@@ -69,8 +69,7 @@ export default function FarmerProfileForm({ onSubmit, isLoading, userId, isUserL
     onSubmit(data, documents);
   }
 
-  const requiredDocsUploaded = documents.landProofUrl && documents.incomeCertificateUrl && documents.identityProofUrl;
-  const isSubmitDisabled = isLoading || isUserLoading || !userId || !requiredDocsUploaded;
+  const isSubmitDisabled = isLoading || isUserLoading || !userId;
 
   return (
      <form onSubmit={form.handleSubmit(handleFormSubmit)} style={{width: '100%'}}>
@@ -128,7 +127,7 @@ export default function FarmerProfileForm({ onSubmit, isLoading, userId, isUserL
         </div>
 
         <div className="document-upload-section">
-            <h3 className="section-title"><FileUp className="mr-3 h-7 w-7 text-amber-300" />Upload Required Documents</h3>
+            <h3 className="section-title"><FileUp className="mr-3 h-7 w-7 text-amber-300" />Upload Documents (Optional)</h3>
             <div className="uploaders-grid">
               <FileUploader 
                 label="Land Ownership Proof"
@@ -136,7 +135,6 @@ export default function FarmerProfileForm({ onSubmit, isLoading, userId, isUserL
                 onUploadComplete={(url) => handleUploadComplete('landProofUrl', url)}
                 onFileRemove={() => handleFileRemove('landProofUrl')}
                 userId={userId}
-                required
               />
               <FileUploader 
                 label="Income Certificate"
@@ -144,7 +142,6 @@ export default function FarmerProfileForm({ onSubmit, isLoading, userId, isUserL
                 onUploadComplete={(url) => handleUploadComplete('incomeCertificateUrl', url)}
                 onFileRemove={() => handleFileRemove('incomeCertificateUrl')}
                 userId={userId}
-                required
               />
               <FileUploader 
                 label="Identity Proof"
@@ -152,7 +149,6 @@ export default function FarmerProfileForm({ onSubmit, isLoading, userId, isUserL
                 onUploadComplete={(url) => handleUploadComplete('identityProofUrl', url)}
                 onFileRemove={() => handleFileRemove('identityProofUrl')}
                 userId={userId}
-                required
               />
               <FileUploader 
                 label="Image of Damaged Crop (Optional)"
@@ -181,11 +177,6 @@ export default function FarmerProfileForm({ onSubmit, isLoading, userId, isUserL
             "Find Schemes"
           )}
         </button>
-        {isSubmitDisabled && !isLoading && !isUserLoading && (
-          <p className="error-message text-center mt-4">Please upload all required documents (Land Proof, Income Certificate, Identity Proof) to continue.</p>
-        )}
     </form>
   );
 }
-
-    
