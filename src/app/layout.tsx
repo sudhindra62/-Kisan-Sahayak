@@ -20,7 +20,8 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
       </head>
       <body>
-        <div className="background-light"></div>
+        <div className="center-blend"></div>
+        <div className="center-glow"></div>
         {children}
         <Toaster />
       </body>
