@@ -39,6 +39,7 @@ Analyze the farmer's profile considering the following factors for your predicti
 
 **Farmer's Profile:**
 - Land Size: {{{landSize}}} acres
+- Farmer Category: {{{farmerCategory}}}
 - Location: State - {{{location.state}}}, District - {{{location.district}}}
 - Crop Type: {{{cropType}}}
 - Irrigation Type: {{{irrigationType}}}

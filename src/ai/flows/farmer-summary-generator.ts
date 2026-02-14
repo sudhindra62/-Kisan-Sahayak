@@ -45,6 +45,7 @@ const prompt = ai.definePrompt({
 
 **Farmer's Profile:**
 - Land Size: {{{farmerProfile.landSize}}} acres
+- Farmer Category: {{{farmerProfile.farmerCategory}}}
 - Location: State - {{{farmerProfile.location.state}}}, District - {{{farmerProfile.location.district}}}
 - Crop Type: {{{farmerProfile.cropType}}}
 - Annual Income: {{{farmerProfile.annualIncome}}}

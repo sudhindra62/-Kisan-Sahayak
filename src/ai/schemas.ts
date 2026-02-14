@@ -2,14 +2,15 @@ import { z } from 'genkit';
 
 // Input Schema for farmer's profile
 export const FarmerProfileInputSchema = z.object({
-  landSize: z.number().positive().describe('The size of the farmer\'s land in acres.'),
+  landSize: z.coerce.number().positive().describe('The size of the farmer\'s land in acres.'),
   location: z.object({
     state: z.string().describe('The state where the farm is located.'),
     district: z.string().describe('The district within the state.'),
   }).describe('The geographical location of the farm.'),
   cropType: z.string().describe('The primary crop type cultivated by the farmer (e.g., "Wheat", "Rice", "Cotton").'),
   irrigationType: z.enum(['Rainfed', 'Well', 'Canal', 'Other']).describe('The primary irrigation method used (e.g., "Rainfed", "Well", "Canal").'),
-  annualIncome: z.number().min(0).describe('The farmer\'s annual income in local currency.'),
+  annualIncome: z.coerce.number().min(0).describe('The farmer\'s annual income in local currency.'),
+  farmerCategory: z.enum(['Small and Marginal', 'Medium', 'Large']).describe('The category of the farmer based on landholding size.'),
 });
 
 // Schema for a single government scheme (internal to the tool/prompt)

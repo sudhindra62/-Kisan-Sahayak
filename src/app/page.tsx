@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { type FarmerProfileInput, type MatchedScheme } from "@/ai/schemas";
+import { type FarmerProfileInput, type MatchedScheme, type SchemeAnalysisOutput } from "@/ai/schemas";
 import { type FarmerSummaryOutput } from "@/ai/flows/farmer-summary-generator";
 import { getEligibleSchemes, getFarmerSummary, getPredictedSchemes } from "@/app/actions";
 import FarmerProfileForm from "@/app/components/farmer-profile-form";
@@ -12,20 +12,9 @@ import { useToast } from "@/hooks/use-toast";
 import type { PredictiveAnalysisOutput } from "@/ai/flows/predictive-scheme-analyzer";
 import PredictiveAnalysis from "@/app/components/predictive-analysis";
 
-type ResultsState = {
-    matchedSchemes: MatchedScheme[];
-    nearMisses?: {
-        name: string;
-        reason_not_eligible: string;
-        improvement_suggestions: string[];
-        alternate_scheme_suggestions: string[];
-    }[];
-} | null;
-
-
 export default function Home() {
   const [isLoading, setIsLoading] = React.useState(false);
-  const [results, setResults] = React.useState<ResultsState>(null);
+  const [results, setResults] = React.useState<SchemeAnalysisOutput | null>(null);
   const [farmerProfile, setFarmerProfile] = React.useState<FarmerProfileInput | null>(null);
   const [summary, setSummary] = React.useState<FarmerSummaryOutput | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = React.useState(false);
@@ -100,7 +89,7 @@ export default function Home() {
         <div className="center-blend"></div>
         <div className="center-glow"></div>
         <div className="form-container">
-            <h1>Farmer Profile</h1>
+            <h1>KisanSahayak AI</h1>
             <p>
                 Enter your details below to discover government schemes tailored to your needs and get guidance on how to apply.
             </p>

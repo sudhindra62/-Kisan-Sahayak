@@ -9,19 +9,11 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { FarmerProfileInputSchema } from '@/ai/schemas';
 
 // Input Schema for the guide generator
 const SchemeApplicationGuideInputSchema = z.object({
-  farmerProfile: z.object({
-      landSize: z.number(),
-      location: z.object({
-          state: z.string(),
-          district: z.string(),
-      }),
-      cropType: z.string(),
-      irrigationType: z.string(),
-      annualIncome: z.number(),
-  }),
+  farmerProfile: FarmerProfileInputSchema,
   scheme: z.object({
     name: z.string(),
     benefits: z.string(),
@@ -67,6 +59,7 @@ Your task is to generate a detailed, step-by-step application guide for the give
 - Location: State - {{{farmerProfile.location.state}}}, District - {{{farmerProfile.location.district}}}
 - Crop Type: {{{farmerProfile.cropType}}}
 - Annual Income: {{{farmerProfile.annualIncome}}}
+- Farmer Category: {{{farmerProfile.farmerCategory}}}
 
 **Scheme Details:**
 - Name: {{{scheme.name}}}
@@ -75,8 +68,8 @@ Your task is to generate a detailed, step-by-step application guide for the give
 - Official Link: {{{scheme.applicationGuideLink}}}
 
 **Instructions:**
-1.  **Analyze the farmer's profile and scheme.** Generate a guide that is highly relevant to the farmer's location (state), income level, and land size.
-2.  **Documents Required:** List the specific documents the farmer will need. Infer this based on typical government requirements (e.g., Land records, Aadhaar card, bank account details, proof of income). Mention if any documents are state-specific.
+1.  **Analyze the farmer's profile and scheme.** Generate a guide that is highly relevant to the farmer's location (state), income level, land size, and farmer category.
+2.  **Documents Required:** List the specific documents the farmer will need. Infer this based on typical government requirements (e.g., Land records, Aadhaar card, bank account details, proof of income). Mention if any documents are state-specific or category-specific (e.g. 'Small and Marginal Farmer Certificate').
 3.  **Application Steps:** Provide a clear, step-by-step process.
     - Include *both* online (via official portal) and offline (visiting a local office like Krishi Vigyan Kendra, Common Service Center (CSC), or district agriculture office) application methods if they exist. Mark each step as online or offline.
     - Be specific (e.g., "Visit the official PM-KISAN portal at... and click on 'New Farmer Registration'").

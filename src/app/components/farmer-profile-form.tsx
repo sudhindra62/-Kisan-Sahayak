@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import type { FarmerProfileInput } from "@/ai/flows/farmer-scheme-eligibility-analyzer";
+import type { FarmerProfileInput } from "@/ai/schemas";
 import { IndianRupee } from "lucide-react";
 
 // Zod schema to match the logic from the AI flow.
@@ -16,6 +16,7 @@ const formSchema = z.object({
   cropType: z.string().min(2, { message: "Crop type is required." }),
   irrigationType: z.enum(['Rainfed', 'Well', 'Canal', 'Other']),
   annualIncome: z.coerce.number().min(0, { message: "Annual income cannot be negative." }),
+  farmerCategory: z.enum(['Small and Marginal', 'Medium', 'Large']),
 });
 
 type FarmerProfileFormProps = {
@@ -35,6 +36,7 @@ export default function FarmerProfileForm({ onSubmit, isLoading }: FarmerProfile
       cropType: "",
       irrigationType: 'Rainfed',
       annualIncome: undefined,
+      farmerCategory: 'Small and Marginal',
     },
   });
 
@@ -80,6 +82,16 @@ export default function FarmerProfileForm({ onSubmit, isLoading }: FarmerProfile
                     <option value="Other">Other</option>
                 </select>
                 {form.formState.errors.irrigationType && <p className="error-message">{form.formState.errors.irrigationType.message}</p>}
+            </div>
+
+            <div className="input-group">
+                <label>Farmer Category</label>
+                <select {...form.register("farmerCategory")}>
+                    <option value="Small and Marginal">Small and Marginal (&lt; 5 acres)</option>
+                    <option value="Medium">Medium (5-10 acres)</option>
+                    <option value="Large">Large (&gt; 10 acres)</option>
+                </select>
+                {form.formState.errors.farmerCategory && <p className="error-message">{form.formState.errors.farmerCategory.message}</p>}
             </div>
         </div>
 

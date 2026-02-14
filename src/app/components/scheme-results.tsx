@@ -5,33 +5,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getSchemeApplicationGuide } from "@/app/actions";
-import type { SchemeApplicationGuideInput, SchemeApplicationGuideOutput } from "@/ai/flows/scheme-application-guide-generator";
-import type { FarmerProfileInput } from "@/ai/flows/farmer-scheme-eligibility-analyzer";
+import type { SchemeApplicationGuideOutput } from "@/ai/flows/scheme-application-guide-generator";
+import type { FarmerProfileInput, MatchedScheme, NearMiss, SchemeAnalysisOutput } from "@/ai/schemas";
 
-type MatchedScheme = {
-  name: string;
-  benefits: string;
-  eligibilityCriteria: string;
-  semantic_similarity_score: number;
-  relevance_reason: string;
-  is_possibly_relevant: boolean;
-  applicationGuideLink?: string | undefined;
-};
-
-type NearMiss = {
-  name: string;
-  reason_not_eligible: string;
-  improvement_suggestions: string[];
-  alternate_scheme_suggestions: string[];
-}
-
-type Results = {
-  matchedSchemes: MatchedScheme[];
-  nearMisses?: NearMiss[];
-} | null;
 
 type SchemeResultsProps = {
-  results: Results;
+  results: SchemeAnalysisOutput | null;
   isLoading: boolean;
   farmerProfile: FarmerProfileInput | null;
 };
@@ -147,7 +126,7 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
 
       setGuideLoading(scheme.name);
       try {
-          const input: SchemeApplicationGuideInput = {
+          const guide = await getSchemeApplicationGuide({
               farmerProfile,
               scheme: {
                   name: scheme.name,
@@ -155,8 +134,7 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
                   eligibilityCriteria: scheme.eligibilityCriteria,
                   applicationGuideLink: scheme.applicationGuideLink,
               }
-          };
-          const guide = await getSchemeApplicationGuide(input);
+          });
           setGeneratedGuides(prev => ({...prev, [scheme.name]: guide}));
       } catch (error) {
            toast({
