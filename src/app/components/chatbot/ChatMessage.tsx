@@ -1,6 +1,6 @@
 'use client';
 
-import { Bot, Languages, User, Loader2, Volume2, Waveform } from 'lucide-react';
+import { Bot, Languages, User, Loader2, Volume2, Waves } from 'lucide-react';
 import type { ChatMessage } from '@/ai/schemas';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -55,7 +55,7 @@ export default function ChatMessageDisplay({
               disabled={isCurrentlyPlaying}
             >
               {isCurrentlyPlaying ? (
-                 <Waveform className="h-4 w-4 text-amber-400" />
+                 <Waves className="h-4 w-4 text-amber-400" />
               ) : (
                  <Volume2 className="h-4 w-4" />
               )}
