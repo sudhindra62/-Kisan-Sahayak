@@ -8,15 +8,21 @@ import SchemeResults from "@/app/components/scheme-results";
 import { useToast } from "@/hooks/use-toast";
 
 type ResultsState = {
-  matchedSchemes: {
-      name: string;
-      benefits: string;
-      eligibilityCriteria: string;
-      semantic_similarity_score: number;
-      relevance_reason: string;
-      is_possibly_relevant: boolean;
-      applicationGuideLink?: string | undefined;
-  }[];
+    matchedSchemes: {
+        name: string;
+        benefits: string;
+        eligibilityCriteria: string;
+        semantic_similarity_score: number;
+        relevance_reason: string;
+        is_possibly_relevant: boolean;
+        applicationGuideLink?: string | undefined;
+    }[];
+    nearMisses?: {
+        name: string;
+        reason_not_eligible: string;
+        improvement_suggestions: string[];
+        alternate_scheme_suggestions: string[];
+    }[];
 } | null;
 
 
@@ -47,6 +53,8 @@ export default function Home() {
 
   return (
     <main>
+        <div className="center-blend"></div>
+        <div className="center-glow"></div>
         <div className="form-container">
             <h1>Farmer Profile</h1>
             <p>

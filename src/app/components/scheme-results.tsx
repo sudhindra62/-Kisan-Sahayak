@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Info, Leaf, Bot, FileText, BookCheck, Clock, AlertTriangle, Phone } from "lucide-react";
+import { ExternalLink, Info, Leaf, Bot, FileText, BookCheck, Clock, AlertTriangle, Phone, ThumbsUp, ChevronsRight } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -18,8 +18,16 @@ type MatchedScheme = {
   applicationGuideLink?: string | undefined;
 };
 
+type NearMiss = {
+  name: string;
+  reason_not_eligible: string;
+  improvement_suggestions: string[];
+  alternate_scheme_suggestions: string[];
+}
+
 type Results = {
   matchedSchemes: MatchedScheme[];
+  nearMisses?: NearMiss[];
 } | null;
 
 type SchemeResultsProps = {
@@ -85,6 +93,43 @@ function ApplicationGuideDisplay({ guide }: { guide: SchemeApplicationGuideOutpu
     );
 }
 
+function NearMissAnalysis({ nearMisses }: { nearMisses: NearMiss[] }) {
+    return (
+        <div className="mt-16">
+            <h2 className="results-title">Opportunities for Improvement</h2>
+            <div className="space-y-5">
+                {nearMisses.map((miss, index) => (
+                    <div className="result-card" key={index} style={{border: '1px solid rgba(245, 197, 66, 0.4)', background: 'linear-gradient(135deg, rgba(70, 50, 10, 0.7), rgba(90, 60, 15, 0.5))'}}>
+                        <div className="result-card-header">
+                             <h3><AlertTriangle className="mr-3 text-amber-300 h-6 w-6" /> {miss.name}</h3>
+                        </div>
+                        <div className="result-section">
+                          <h4 className="flex items-center"><Info className="mr-2 h-4 w-4" /> Reason for Ineligibility</h4>
+                          <p>{miss.reason_not_eligible}</p>
+                        </div>
+
+                         <div className="result-section">
+                          <h4 className="flex items-center"><ThumbsUp className="mr-2 h-4 w-4" /> Improvement Suggestions</h4>
+                            <ul className="guide-list">
+                                {miss.improvement_suggestions.map((suggestion: string, i: number) => <li key={i}>{suggestion}</li>)}
+                            </ul>
+                        </div>
+
+                        {miss.alternate_scheme_suggestions && miss.alternate_scheme_suggestions.length > 0 && (
+                            <div className="result-section">
+                                <h4 className="flex items-center"><ChevronsRight className="mr-2 h-4 w-4" /> Consider These Alternatives</h4>
+                                <ul className="guide-list">
+                                    {miss.alternate_scheme_suggestions.map((alt: string, i: number) => <li key={i}>{alt}</li>)}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 export default function SchemeResults({ results, isLoading, farmerProfile }: SchemeResultsProps) {
   const [guideLoading, setGuideLoading] = useState<string | null>(null);
   const [generatedGuides, setGeneratedGuides] = useState<Record<string, SchemeApplicationGuideOutput>>({});
@@ -136,10 +181,27 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
   if (!results) {
     return null;
   }
+  
+  const hasMatches = results.matchedSchemes.length > 0;
+  const hasNearMisses = results.nearMisses && results.nearMisses.length > 0;
+
+  if (!hasMatches && !hasNearMisses) {
+    return (
+        <section className="results-container w-full">
+            <div className="no-results-card">
+              <Info className="icon" />
+              <h2>No Schemes Found</h2>
+              <p>
+                Based on the profile provided, we couldn't find any matching government schemes at the moment.
+              </p>
+            </div>
+        </section>
+    );
+  }
 
   return (
     <section className="results-container w-full">
-      {results.matchedSchemes.length > 0 ? (
+      {hasMatches && (
         <>
           <h2 className="results-title">Relevant Schemes Found</h2>
           <div className="space-y-5">
@@ -212,15 +274,10 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
             ))}
           </div>
         </>
-      ) : (
-        <div className="no-results-card">
-          <Info className="icon" />
-          <h2>No Schemes Found</h2>
-          <p>
-            Based on the profile provided, we couldn't find any matching government schemes at the moment.
-          </p>
-        </div>
       )}
+
+      {hasNearMisses && <NearMissAnalysis nearMisses={results.nearMisses!} />}
+
     </section>
   );
 }

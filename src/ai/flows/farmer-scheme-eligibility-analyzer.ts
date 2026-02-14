@@ -60,6 +60,14 @@ const MatchedSchemeSchema = z.object({
     .describe('Link to the official application guide or portal.'),
 });
 
+// New Schema for Near Misses
+const NearMissSchemeSchema = z.object({
+  name: z.string().describe('The name of the scheme the farmer nearly qualifies for.'),
+  reason_not_eligible: z.string().describe('A clear explanation of the specific criteria the farmer fails to meet.'),
+  improvement_suggestions: z.array(z.string()).describe('Actionable suggestions for what the farmer could change to become eligible in the future (e.g., "Form a Self-Help Group", "Switch to a water-saving irrigation method like Drip").'),
+  alternate_scheme_suggestions: z.array(z.string()).describe('A list of other scheme names from the provided list that might be a better fit for the farmer\'s current profile.'),
+});
+
 // Output Schema for the analysis
 const SchemeAnalysisOutputSchema = z.object({
   matchedSchemes: z
@@ -67,6 +75,7 @@ const SchemeAnalysisOutputSchema = z.object({
     .describe(
       "A list of government schemes that are semantically relevant to the farmer's profile, sorted by relevance score."
     ),
+  nearMisses: z.array(NearMissSchemeSchema).describe('A list of schemes where the farmer is close to qualifying, with suggestions for improvement.'),
 });
 export type SchemeAnalysisOutput = z.infer<typeof SchemeAnalysisOutputSchema>;
 
@@ -135,6 +144,10 @@ const farmerSchemeEligibilityPrompt = ai.definePrompt({
 - **Reasoning:** Provide a clear \`relevance_reason\` for each match. This reason should explain the connection between the farmer's profile (land size, location, crop, income) and the scheme's eligibility criteria.
 - **Possible Relevance:** If a scheme's relevance is uncertain or depends on specific criteria not fully covered in the profile (e.g., being part of a specific farmer group, detailed income brackets, exact location definitions like 'drought-prone area'), mark \`is_possibly_relevant\` as true. In the \`relevance_reason\` for such cases, clearly state what the farmer needs to review.
 - **Eligibility Criteria**: For each relevant scheme, you MUST include the original 'Eligibility Criteria' text from the provided scheme list in the \`eligibilityCriteria\` field.
+- **Near-Miss Analysis:** After identifying matched schemes, analyze the schemes that were *not* a strong match but where the farmer is close to qualifying (e.g., fails only one or two key criteria). These are "near-misses". For each near-miss, populate the \`nearMisses\` array.
+- \`reason_not_eligible\`: Clearly state the primary reason(s) for ineligibility.
+- \`improvement_suggestions\`: Provide concrete, actionable suggestions for the farmer to meet the criteria in the future.
+- \`alternate_scheme_suggestions\`: If applicable, suggest other schemes from the provided list that are a better fit.
 
 Farmer's Profile:
 - Land Size: {{{farmerProfile.landSize}}} acres
@@ -152,7 +165,7 @@ Eligibility Criteria: {{{this.eligibilityCriteria}}}
 Application Guide Link: {{{this.applicationGuideLink}}}
 {{/each}}
 
-Analyze the farmer's profile against each scheme. Return a list of all relevant schemes (direct and possible matches), sorted from the highest \`semantic_similarity_score\` to the lowest. If no schemes are relevant, return an empty array for matchedSchemes.`
+Analyze the farmer's profile against each scheme. Return a list of all relevant schemes (direct and possible matches), sorted from the highest \`semantic_similarity_score\` to the lowest. Also, identify any "near-miss" schemes and provide suggestions as described. If no schemes are relevant, return empty arrays for both matchedSchemes and nearMisses.`
 });
 
 // Define the Genkit flow
