@@ -43,7 +43,7 @@ export default function Home() {
     <main>
         <div className="form-container">
             <h1>🚜 Farmer Profile</h1>
-            <p style={{textAlign: 'center', color: 'rgba(255, 255, 255, 0.8)', maxWidth: '600px', margin: '-20px auto 40px auto', lineHeight: '1.6'}}>
+            <p>
                 Enter your details below to discover government schemes tailored to your needs and get guidance on how to apply.
             </p>
             <FarmerProfileForm onSubmit={handleFormSubmit} isLoading={isLoading} />

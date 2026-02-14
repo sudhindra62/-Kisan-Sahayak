@@ -1,3 +1,7 @@
+/* ============================= */
+/* GLOBAL RESET */
+/* ============================= */
+
 * {
   margin: 0;
   padding: 0;
@@ -6,66 +10,111 @@
 }
 
 body {
-  height: 100vh;
+  min-height: 100vh;
   overflow-x: hidden;
-  background: #111;
+  color: #f8f8f8;
+  position: relative;
+  background: #111; /* fallback */
 }
 
-/* ===== Background Gradient Blend ===== */
+/* ============================= */
+/* BACKGROUND MASTER BLEND */
+/* ============================= */
 
-.background {
+body::before {
+  content: "";
   position: fixed;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
+  inset: 0;
+  z-index: -3;
+
+  /* Dual Color Directional Gradient */
+  background:
+    linear-gradient(90deg,
+      #0b3d2e 0%,
+      #0f5132 25%,
+      #6b6f1d 55%,
+      #b8860b 75%,
+      #c9a227 100%
+    );
+}
+
+/* Soft radial lighting in middle */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
 
   background:
     radial-gradient(circle at center,
-      rgba(245,185,66,0.4) 0%,
-      rgba(245,185,66,0.2) 20%,
-      rgba(27,94,32,0.3) 45%,
-      rgba(15,81,50,0.6) 70%,
-      #0b3d2e 100%
-    ),
-    linear-gradient(135deg, #0f5132, #c9a227);
+      rgba(255, 214, 100, 0.45) 0%,
+      rgba(255, 214, 100, 0.25) 15%,
+      rgba(255, 214, 100, 0.1) 30%,
+      transparent 55%
+    );
 }
 
-/* ===== Glass Premium Container ===== */
+/* ============================= */
+/* FORM CONTAINER – PREMIUM GLASS */
+/* ============================= */
 
 .form-container {
   width: 85%;
-  max-width: 1000px;
-  margin: 60px auto;
-  padding: 40px;
-  border-radius: 25px;
+  max-width: 1100px;
+  margin: 80px auto;
+  padding: 55px 60px;
+  border-radius: 28px;
 
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(25px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* Tinted glass like clarityboost */
+  background:
+    linear-gradient(
+      135deg,
+      rgba(20, 70, 45, 0.6),
+      rgba(150, 120, 20, 0.35)
+    );
+
+  backdrop-filter: blur(30px);
+
+  border: 1px solid rgba(255,255,255,0.08);
 
   box-shadow:
-    0 20px 60px rgba(0,0,0,0.5),
-    0 0 60px rgba(245,185,66,0.15);
+    0 35px 90px rgba(0,0,0,0.6),
+    0 0 80px rgba(255, 195, 0, 0.18);
 
-  color: white;
+  transition: all 0.4s ease;
 }
 
-h1 {
+/* ============================= */
+/* TITLE */
+/* ============================= */
+
+.form-container > h1 {
+  font-size: 38px;
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 18px;
   font-weight: 600;
-  font-size: 32px;
+  letter-spacing: 1px;
 }
 
-/* ===== Grid Layout ===== */
+.form-container > p {
+  text-align: center;
+  opacity: 0.85;
+  margin-bottom: 45px;
+}
+
+/* ============================= */
+/* GRID LAYOUT */
+/* ============================= */
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
 }
 
-/* ===== Input Groups ===== */
+/* ============================= */
+/* INPUTS */
+/* ============================= */
 
 .input-group {
   display: flex;
@@ -73,65 +122,85 @@ h1 {
 }
 
 label {
-  margin-bottom: 8px;
   font-size: 14px;
-  color: #f5f5f5;
+  margin-bottom: 10px;
+  color: rgba(255,255,255,0.85);
 }
 
 input, select {
-  padding: 14px;
-  border-radius: 12px;
+  padding: 16px 18px;
+  border-radius: 14px;
+
+  background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.1);
 
-  background: rgba(255,255,255,0.08);
   color: white;
   font-size: 14px;
 
-  outline: none;
   transition: all 0.3s ease;
+  outline: none;
+}
+
+input::placeholder {
+  color: rgba(255,255,255,0.5);
 }
 
 input:focus, select:focus {
-  border-color: #f5b942;
-  box-shadow: 0 0 12px rgba(245,185,66,0.4);
+  border-color: #f5c542;
+
+  box-shadow:
+    0 0 0 2px rgba(245,197,66,0.3),
+    0 0 18px rgba(245,197,66,0.5);
 }
 
 select {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 14px center;
+  background-position: right 18px center;
   background-size: 16px;
 }
 
-/* ===== Premium Button ===== */
+/* ============================= */
+/* CTA BUTTON – CLARITYBOOST STYLE */
+/* ============================= */
 
 .premium-btn {
-  margin-top: 40px;
+  margin-top: 55px;
   width: 100%;
-  padding: 16px;
-  font-size: 16px;
-  font-weight: 600;
-
+  padding: 20px;
+  border-radius: 60px;
   border: none;
-  border-radius: 50px;
 
-  background: linear-gradient(135deg, #c9a227, #f5b942);
-  color: #1b5e20;
+  font-size: 18px;
+  font-weight: 600;
   
   display: flex;
   align-items: center;
   justify-content: center;
 
-  cursor: pointer;
-  transition: all 0.4s ease;
+  background:
+    linear-gradient(90deg,
+      #c99a1d,
+      #f5c542
+    );
 
-  box-shadow: 0 8px 25px rgba(245,185,66,0.5);
+  color: #134e2e;
+
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.4),
+    0 0 30px rgba(245,197,66,0.6);
+
+  transition: all 0.35s ease;
+  cursor: pointer;
 }
 
 .premium-btn:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgba(245,185,66,0.7);
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 30px 60px rgba(0,0,0,0.5),
+    0 0 40px rgba(245,197,66,0.8);
 }
 
 .premium-btn:disabled {
@@ -139,106 +208,117 @@ select {
   cursor: not-allowed;
 }
 
-/* ===== Results Section ===== */
+/* ============================= */
+/* RESULTS & FEEDBACK STYLES     */
+/* ============================= */
+
 .results-container {
   width: 100%;
-  margin-top: 40px;
-  animation: fade-in 0.5s ease-in-out;
+  margin-top: 55px;
+  animation: fade-in 0.6s ease-out;
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(25px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .results-title {
   text-align: center;
-  margin-bottom: 25px;
+  margin-bottom: 35px;
   font-weight: 600;
-  font-size: 28px;
+  font-size: 32px;
   color: white;
 }
 
-.result-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 25px;
-  border-radius: 20px;
-  margin-bottom: 20px;
+.result-card, .no-results-card {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(20, 70, 45, 0.4),
+      rgba(150, 120, 20, 0.25)
+    );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 30px 35px;
+  border-radius: 22px;
+  margin-bottom: 25px;
 }
 
 .result-card h3 {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
-  margin-bottom: 20px;
-  color: #f5b942;
+  margin-bottom: 25px;
+  color: #f5c542;
   display: flex;
   align-items: center;
 }
 
 .result-section h4 {
   font-weight: 600;
+  font-size: 16px;
   color: #fff;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .result-section p {
-  color: rgba(255, 255, 255, 0.8);
-  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.7;
+  text-align: left;
+  margin-bottom: 0;
 }
 
 .result-section {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 .result-card a.premium-btn {
-  margin-top: 10px;
+  margin-top: 20px;
   width: auto;
-  padding: 12px 24px;
-  font-size: 14px;
+  padding: 14px 28px;
+  font-size: 15px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .no-results-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 40px;
-  border-radius: 20px;
+  padding: 50px;
   text-align: center;
 }
 
 .no-results-card .icon {
-  margin: 0 auto 1rem;
-  width: 48px;
-  height: 48px;
+  margin: 0 auto 1.2rem;
+  width: 52px;
+  height: 52px;
   color: rgba(255,255,255,0.7);
 }
 
 .no-results-card h2 {
-  font-size: 22px;
-  margin-bottom: 10px;
+  font-size: 24px;
+  margin-bottom: 12px;
 }
+
 .no-results-card p {
   color: rgba(255,255,255,0.7);
+  max-width: 450px;
+  margin: 0 auto;
 }
 
 .error-message {
-    color: #fdd835; /* A gold-ish yellow for errors */
-    font-size: 12px;
-    margin-top: 5px;
+    color: #fdd835;
+    font-size: 13px;
+    margin-top: 8px;
 }
 
 .loading-spinner {
     display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(27, 94, 32, 0.5);
-    border-top-color: #f5b942;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(19, 78, 46, 0.4);
+    border-top-color: #f5c542;
     border-radius: 50%;
     animation: spin 1s ease-in-out infinite;
-    margin-right: 8px;
+    margin-right: 12px;
 }
 
 @keyframes spin {
