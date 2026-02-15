@@ -8,7 +8,7 @@ import SchemeResults from "@/app/components/scheme-results";
 import DocumentReadinessChecker from "@/app/components/document-readiness-checker";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useFirestore, useUser, initiateAnonymousSignIn, setDocument } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { doc, Timestamp } from "firebase/firestore";
 import { analyzeSchemesOffline } from "@/lib/scheme-engine";
 
 type DocumentsState = {
@@ -79,7 +79,7 @@ export default function Home() {
             incomeCertificateUrl: documents.incomeCertificateUrl || null,
             identityProofUrl: documents.identityProofUrl || null,
             damagedCropImageUrl: documents.damagedCropImageUrl || null,
-            uploadTimestamp: new Date(),
+            uploadTimestamp: Timestamp.fromDate(new Date()),
             verificationStatus: 'Pending',
         };
         setDocument(docRef, docData, { merge: true });

@@ -6,14 +6,14 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 import {
-  type SchemeApplicationGuideInput,
   SchemeApplicationGuideInputSchema,
-  type SchemeApplicationGuideOutput,
   SchemeApplicationGuideOutputSchema,
 } from '@/ai/schemas';
 
-export type { SchemeApplicationGuideOutput };
+export type SchemeApplicationGuideInput = z.infer<typeof SchemeApplicationGuideInputSchema>;
+export type SchemeApplicationGuideOutput = z.infer<typeof SchemeApplicationGuideOutputSchema>;
 
 export async function generateSchemeApplicationGuide(
   input: SchemeApplicationGuideInput

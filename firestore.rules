@@ -36,6 +36,10 @@ service cloud.firestore {
     function isString(value) {
       return value is string;
     }
+
+    function isStringOrNull(value) {
+      return value == null || value is string;
+    }
     
     function isNumber(value) {
       return value is number;
@@ -47,7 +51,6 @@ service cloud.firestore {
 
     function isValidFarmerProfile(data) {
       return data.keys().hasAll(['id', 'landSize', 'state', 'district', 'cropType', 'irrigationType', 'annualIncome', 'documentSetId'])
-          && data.keys().size() == 8
           && isString(data.id)
           && isNumber(data.landSize)
           && isString(data.state)
@@ -59,19 +62,14 @@ service cloud.firestore {
     }
     
     function isValidUploadedDocument(data) {
-      // Optional fields can be added to this list
-      let optionalFields = ['damagedCropImageUrl', 'mismatchDetails'];
-      let allFields = ['id', 'landProofUrl', 'incomeCertificateUrl', 'identityProofUrl', 'uploadTimestamp', 'verificationStatus'].concat(optionalFields);
-      
       return data.keys().hasAll(['id', 'landProofUrl', 'incomeCertificateUrl', 'identityProofUrl', 'uploadTimestamp', 'verificationStatus'])
-          && data.keys().hasOnly(allFields)
           && isString(data.id)
-          && isString(data.landProofUrl)
-          && isString(data.incomeCertificateUrl)
-          && isString(data.identityProofUrl)
+          && isStringOrNull(data.landProofUrl)
+          && isStringOrNull(data.incomeCertificateUrl)
+          && isStringOrNull(data.identityProofUrl)
           && isTimestamp(data.uploadTimestamp)
           && isString(data.verificationStatus)
-          && (data.containsKey('damagedCropImageUrl') ? isString(data.damagedCropImageUrl) : true)
+          && isStringOrNull(data.damagedCropImageUrl)
           && (data.containsKey('mismatchDetails') ? isString(data.mismatchDetails) : true);
     }
     
