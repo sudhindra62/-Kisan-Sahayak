@@ -5,7 +5,7 @@
  * - textToSpeech - A function that handles the TTS conversion.
  */
 
-import { ai } from '@/ai/genkit';
+import { voiceAi } from '@/ai/genkit';
 import {
   type TextToSpeechInput,
   TextToSpeechInputSchema,
@@ -47,14 +47,14 @@ export async function textToSpeech(
   return textToSpeechFlow(input);
 }
 
-const textToSpeechFlow = ai.defineFlow(
+const textToSpeechFlow = voiceAi.defineFlow(
   {
     name: 'textToSpeechFlow',
     inputSchema: TextToSpeechInputSchema,
     outputSchema: TextToSpeechOutputSchema,
   },
   async (input) => {
-    const { media } = await ai.generate({
+    const { media } = await voiceAi.generate({
       model: 'googleai/gemini-2.5-flash-preview-tts',
       config: {
         responseModalities: ['AUDIO'],
