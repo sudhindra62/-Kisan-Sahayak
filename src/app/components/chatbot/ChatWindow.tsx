@@ -175,72 +175,69 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     if (!content || isSending) return;
 
     const userMessage: DisplayMessage = { role: 'user', content };
-    const newMessagesWithUser = [...messages, userMessage];
-    
-    setMessages(newMessagesWithUser);
+    const newMessages = [...messages, userMessage];
+
+    setMessages(newMessages);
     setInput('');
     setIsSending(true);
 
     let aiMessage: DisplayMessage;
 
     if (isOnline) {
-        try {
-            const historyForAI = messages.map(m => ({
-                role: m.role,
-                content: m.originalContent || m.content,
-            }));
+      try {
+        const historyForAI = messages.map((m) => ({
+          role: m.role,
+          content: m.originalContent || m.content,
+        }));
 
-            const aiResponse = await getChatbotResponse({
-                farmerProfile,
-                history: historyForAI, 
-                message: content,
-            });
+        const aiResponse = await getChatbotResponse({
+          farmerProfile,
+          history: historyForAI,
+          message: content,
+        });
 
-            aiMessage = { 
-                role: 'model', 
-                content: aiResponse,
-                originalContent: aiResponse
-            };
-            
-            playAudio(aiResponse, newMessagesWithUser.length); // Play audio for new message
-
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-            console.error("Failed to get chat response:", error);
-            aiMessage = { role: 'model', content: `Sorry, I'm having trouble connecting. Reason: ${errorMessage}`, originalContent: `Sorry, I'm having trouble connecting. Reason: ${errorMessage}`};
-        }
-    } else {
-        const offlineResponse = getOfflineChatbotResponse(content, farmerProfile);
-        aiMessage = { 
-            role: 'model', 
-            content: offlineResponse,
-            originalContent: offlineResponse
+        aiMessage = {
+          role: 'model',
+          content: aiResponse,
+          originalContent: aiResponse,
         };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        console.error('Failed to get chat response:', error);
+        aiMessage = {
+          role: 'model',
+          content: `Sorry, I'm having trouble connecting. Reason: ${errorMessage}`,
+          originalContent: `Sorry, I'm having trouble connecting. Reason: ${errorMessage}`,
+        };
+      }
+    } else {
+      const offlineResponse = getOfflineChatbotResponse(content, farmerProfile);
+      aiMessage = {
+        role: 'model',
+        content: offlineResponse,
+        originalContent: offlineResponse,
+      };
     }
 
-    const finalMessages = [...newMessagesWithUser, aiMessage];
-    
-    const updateState = () => {
-      setMessages(finalMessages);
-      setIsSending(false);
+    const finalMessages = [...newMessages, aiMessage];
+    setMessages(finalMessages);
+    setIsSending(false);
 
-      if (isOnline && chatHistoryRef && !aiMessage.content.startsWith('Sorry')) {
-          const historyToSave = finalMessages.map(m => ({
-              role: m.role,
-              content: m.originalContent || m.content
-          }));
-          setDocument(chatHistoryRef, { 
-              id: userId,
-              messages: historyToSave,
-              updatedAt: new Date()
-          }, { merge: true });
-      }
-    };
-
-    if (isOnline) {
-      updateState();
-    } else {
-      setTimeout(updateState, 500);
+    // Save history to Firestore
+    if (isOnline && chatHistoryRef && !aiMessage.content.startsWith('Sorry')) {
+      const historyToSave = finalMessages.map((m) => ({
+        role: m.role,
+        content: m.originalContent || m.content,
+      }));
+      setDocument(
+        chatHistoryRef,
+        {
+          id: userId,
+          messages: historyToSave,
+          updatedAt: new Date(),
+        },
+        { merge: true }
+      );
     }
   };
 
