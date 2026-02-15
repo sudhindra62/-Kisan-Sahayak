@@ -2,40 +2,27 @@
  * This Firestore Security Ruleset is designed for a farmer subsidy application.
  *
  * Core Philosophy:
- * The security model enforces a strict user-ownership paradigm. All data created
- * by a user is private and accessible only to that user. Publicly-viewable data
- * is stored separately and is read-only for all users, preventing any modification
- * from the client-side.
+ * The security model enforces a strict user-ownership paradigm and rigorous data
+ * validation. All data created by a user is private and accessible only to that
+ * user. Data is validated against a strict schema on the server-side before
+ * any write operation, preventing malformed or malicious data injection.
  *
- * Data Structure:
- * All user-specific data, including Farmer Profiles, Uploaded Documents, and Chat History,
- * is hierarchically nested under a path unique to that user: `/users/{userId}/...`.
- * This structure inherently partitions user data for security and query performance.
- * Global data, like government schemes, resides in a top-level collection.
- *
- * Key Security Decisions:
- * - User Isolation: Users can only access their own data tree. They cannot read,
- *   list, or write to another user's data. There is no functionality for listing users.
- * - Public Data is Read-Only: The `/government_schemes` collection is readable by any
- *   authenticated user but is not writable from the client. This data is presumed
- *   to be managed by administrators via a trusted backend environment.
- * - Path and Data Consistency: To ensure integrity, rules enforce that the document ID
- *   for a user's data must match the user's Auth UID from the path.
- *   Furthermore, a corresponding `id` field within the document must also match the UID,
- *   making ownership explicit and immutable.
+ * Data Structure & Security:
+ * - User Isolation: Data is nested under `/users/{userId}`, isolating each user's data.
+ * - Public Data is Read-Only: `/government_schemes` is readable by any authenticated
+ *   user but is not writable from the client.
+ * - Path and Data Consistency: Rules enforce that the document ID for user data
+ *   must match the user's Auth UID and a corresponding `id` field within the
+ *   document, making ownership explicit and immutable.
+ * - Schema Validation: All `create` and `update` operations are validated against
+ *   functions (e.g., `isValidFarmerProfile`) that enforce data types, required
+ *   fields, and prevent extraneous fields, ensuring data integrity at the source.
  *
  * Denormalization for Authorization:
- * This ruleset relies on denormalization to be fast and secure. Instead of using `get()`
- * calls to check parent documents for ownership, ownership is established directly
+ * This ruleset relies on denormalization. Ownership is established directly
  * through the request path (`/users/{userId}/...`) and a denormalized `id` field
  * (`id: userId`) stored within each user-specific document. This makes authorization
  * checks self-contained, performant, and cost-effective.
- *
- * Structural Segregation:
- * Private user data (`farmer_profile`, `uploaded_documents`, `chat_history`) is structurally
- * segregated into user-specific subcollections. Public data (`government_schemes`)
- * is in its own top-level collection. This clear separation prevents accidental
- * data exposure and simplifies rules logic for list operations.
  */
 rules_version = '2';
 
@@ -43,88 +30,127 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // --------------------------------------------------------------------
-    // Helper Functions
+    // Type and Schema Validation Helper Functions
+    // --------------------------------------------------------------------
+    
+    function isString(value) {
+      return value is string;
+    }
+    
+    function isNumber(value) {
+      return value is number;
+    }
+
+    function isTimestamp(value) {
+      return value is timestamp;
+    }
+
+    function isValidFarmerProfile(data) {
+      return data.keys().hasAll(['id', 'landSize', 'state', 'district', 'cropType', 'irrigationType', 'annualIncome', 'documentSetId'])
+          && data.keys().size() == 8
+          && isString(data.id)
+          && isNumber(data.landSize)
+          && isString(data.state)
+          && isString(data.district)
+          && isString(data.cropType)
+          && isString(data.irrigationType)
+          && isNumber(data.annualIncome)
+          && isString(data.documentSetId);
+    }
+    
+    function isValidUploadedDocument(data) {
+      // Optional fields can be added to this list
+      let optionalFields = ['damagedCropImageUrl', 'mismatchDetails'];
+      let allFields = ['id', 'landProofUrl', 'incomeCertificateUrl', 'identityProofUrl', 'uploadTimestamp', 'verificationStatus'].concat(optionalFields);
+      
+      return data.keys().hasAll(['id', 'landProofUrl', 'incomeCertificateUrl', 'identityProofUrl', 'uploadTimestamp', 'verificationStatus'])
+          && data.keys().hasOnly(allFields)
+          && isString(data.id)
+          && isString(data.landProofUrl)
+          && isString(data.incomeCertificateUrl)
+          && isString(data.identityProofUrl)
+          && isTimestamp(data.uploadTimestamp)
+          && isString(data.verificationStatus)
+          && (data.containsKey('damagedCropImageUrl') ? isString(data.damagedCropImageUrl) : true)
+          && (data.containsKey('mismatchDetails') ? isString(data.mismatchDetails) : true);
+    }
+    
+    function isValidChatHistory(data) {
+       return data.keys().hasAll(['id', 'messages', 'updatedAt'])
+           && data.keys().size() == 3
+           && isString(data.id)
+           && data.messages is list
+           && isTimestamp(data.updatedAt)
+           && (data.messages.size() == 0 || (
+               data.messages[0].keys().hasAll(['role', 'content']) &&
+               isString(data.messages[0].role) &&
+               isString(data.messages[0].content)
+             )
+           );
+    }
+
+    // --------------------------------------------------------------------
+    // Core Auth Helper Functions
     // --------------------------------------------------------------------
 
-    /**
-     * Checks if the user is authenticated.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * Checks if the currently authenticated user's UID matches the provided userId.
-     * This is the fundamental check for resource ownership.
-     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * Ensures an operation is performed by the owner on an existing document.
-     * Crucial for preventing modification or deletion of non-existent data.
-     */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
     }
-
-    /**
-     * Validates that the internal 'id' field, which represents the owner's UID,
-     * is correctly set during document creation and matches the user's auth UID.
-     */
+    
     function hasValidCreationId(userId) {
       return request.resource.data.id == userId;
     }
-
-    /**
-     * Validates that the internal 'id' field is immutable during an update.
-     * This prevents re-assigning ownership of a document.
-     */
+    
     function hasImmutableId() {
       return request.resource.data.id == resource.data.id;
     }
 
 
     // --------------------------------------------------------------------
-    // User Data Collections
+    // User Data Collections with Schema Validation
     // --------------------------------------------------------------------
 
     match /users/{userId} {
-      /**
-       * @description Prevents direct access to the parent user document.
-       */
       allow read, write: if false;
 
-      /**
-       * @description Secures a farmer's profile data, allowing only the owner to access and manage it.
-       */
       match /farmer_profile/{farmerProfileId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && farmerProfileId == userId && hasValidCreationId(userId);
-        allow update: if isExistingOwner(userId) && farmerProfileId == userId && hasImmutableId();
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && farmerProfileId == userId 
+                         && hasValidCreationId(userId) 
+                         && isValidFarmerProfile(request.resource.data);
+        allow update: if isExistingOwner(userId) && farmerProfileId == userId 
+                         && hasImmutableId() 
+                         && isValidFarmerProfile(request.resource.data);
         allow delete: if isExistingOwner(userId) && farmerProfileId == userId;
       }
 
-      /**
-       * @description Secures a farmer's uploaded document metadata, accessible only by the owner.
-       */
       match /uploaded_documents/{uploadedDocumentId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && uploadedDocumentId == userId && hasValidCreationId(userId);
-        allow update: if isExistingOwner(userId) && uploadedDocumentId == userId && hasImmutableId();
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && uploadedDocumentId == userId 
+                         && hasValidCreationId(userId) 
+                         && isValidUploadedDocument(request.resource.data);
+        allow update: if isExistingOwner(userId) && uploadedDocumentId == userId 
+                         && hasImmutableId() 
+                         && isValidUploadedDocument(request.resource.data);
         allow delete: if isExistingOwner(userId) && uploadedDocumentId == userId;
       }
       
-      /**
-       * @description Secures a user's chat history, allowing only the owner to access and manage it.
-       */
       match /chat_history/{chatId} {
         allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && chatId == userId && hasValidCreationId(userId);
-        allow update: if isExistingOwner(userId) && chatId == userId && hasImmutableId();
+        allow create: if isOwner(userId) && chatId == userId 
+                         && hasValidCreationId(userId) 
+                         && isValidChatHistory(request.resource.data);
+        allow update: if isExistingOwner(userId) && chatId == userId 
+                         && hasImmutableId() 
+                         && isValidChatHistory(request.resource.data);
         allow delete: if isExistingOwner(userId) && chatId == userId;
       }
     }
@@ -134,16 +160,10 @@ service cloud.firestore {
     // Public Data Collections
     // --------------------------------------------------------------------
 
-    /**
-     * @description Allows any authenticated user to read government scheme information, but prevents any client-side modifications.
-     */
     match /government_schemes/{schemeId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow create, update, delete: if false;
     }
   }
 }
-    
