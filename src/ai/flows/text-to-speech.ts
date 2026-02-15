@@ -95,7 +95,7 @@ const textToSpeechFlow = ai.defineFlow(
           responseModalities: ['AUDIO'],
           speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: 'Chara' },
+              prebuiltVoiceConfig: { voiceName: 'Algenib' },
             },
           },
         },
