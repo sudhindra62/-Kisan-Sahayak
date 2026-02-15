@@ -53,6 +53,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const [speechLang, setSpeechLang] = useState('en-IN');
   const [audioDataCache, setAudioDataCache] = useState<Record<string, string>>({});
   const [audioLoadingIndex, setAudioLoadingIndex] = useState<number | null>(null);
+  const [isFetchingAudio, setIsFetchingAudio] = useState(false);
   const [audioPlayingIndex, setAudioPlayingIndex] = useState<number | null>(null);
   const { toast } = useToast();
 
@@ -137,45 +138,50 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   }
 
   const playAudio = async (textContent: string | undefined, index: number) => {
+    // 1. Check the master lock. If busy, do nothing.
+    if (isFetchingAudio) {
+      return;
+    }
     if (!textContent || !audioPlayerRef.current) return;
-    
+
     // If clicking the currently playing message, stop it.
     if (audioPlayingIndex === index) {
-        audioPlayerRef.current.pause(); // onPause handler will set playing index to null
-        return;
+      audioPlayerRef.current.pause();
+      return;
     }
 
-    // Stop any currently playing audio before fetching a new one
+    // Stop any other currently playing audio.
     if (audioPlayerRef.current && !audioPlayerRef.current.paused) {
-        audioPlayerRef.current.pause();
+      audioPlayerRef.current.pause();
     }
 
+    // 2. Set the lock and UI state
+    setIsFetchingAudio(true);
     setAudioLoadingIndex(index);
-    try {
-        const audioSrc = await handleTextToSpeech(textContent);
-        
-        // Guard against race conditions: if user clicked another button while this one was loading
-        if (audioLoadingIndex !== index) return;
 
-        if (audioSrc && audioPlayerRef.current) {
-            audioPlayerRef.current.src = audioSrc;
-            setAudioPlayingIndex(index);
-            audioPlayerRef.current.play().catch(e => {
-                toast({
-                    variant: 'destructive',
-                    title: 'Audio Playback Error',
-                    description: 'Could not play the generated audio file.',
-                });
-                setAudioPlayingIndex(null); // Reset on error
-            });
-        }
+    try {
+      // 3. Make the async call
+      const audioSrc = await handleTextToSpeech(textContent);
+
+      // 4. If successful, play the audio
+      if (audioSrc && audioPlayerRef.current) {
+        audioPlayerRef.current.src = audioSrc;
+        setAudioPlayingIndex(index);
+        audioPlayerRef.current.play().catch((e) => {
+          toast({
+            variant: 'destructive',
+            title: 'Audio Playback Error',
+            description: 'Could not play the generated audio file.',
+          });
+          setAudioPlayingIndex(null);
+        });
+      }
     } finally {
-        // Ensure loading state is cleared only if it belongs to this request
-        if (audioLoadingIndex === index) {
-            setAudioLoadingIndex(null);
-        }
+      // 5. Release the lock and reset UI state in all cases
+      setIsFetchingAudio(false);
+      setAudioLoadingIndex(null);
     }
-  }
+  };
 
   const handleSendMessage = async (e?: React.FormEvent, messageContent?: string) => {
     if (e) e.preventDefault();
@@ -186,7 +192,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     const newMessages = [...messages, userMessage];
 
     setMessages(newMessages);
-setInput('');
+    setInput('');
     setIsSending(true);
 
     let aiMessage: DisplayMessage;
@@ -393,8 +399,8 @@ setInput('');
             onTranslate={(lang) => handleTranslateMessage(index, lang)}
             areOnlineActionsAvailable={isOnline}
             isFetchingThisAudio={audioLoadingIndex === index}
+            isFetchingAudio={isFetchingAudio}
             isPlayingThisAudio={audioPlayingIndex === index}
-            isAnyAudioFetching={audioLoadingIndex !== null}
             onPlayAudio={() => playAudio(msg.content, index)}
           />
         ))}

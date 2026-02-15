@@ -12,8 +12,8 @@ type ChatMessageDisplayProps = {
   isTranslating: boolean;
   areOnlineActionsAvailable: boolean;
   isFetchingThisAudio: boolean;
+  isFetchingAudio: boolean;
   isPlayingThisAudio: boolean;
-  isAnyAudioFetching: boolean;
   onPlayAudio: () => void;
 };
 
@@ -28,8 +28,8 @@ export default function ChatMessageDisplay({
   isTranslating,
   areOnlineActionsAvailable,
   isFetchingThisAudio,
+  isFetchingAudio,
   isPlayingThisAudio,
-  isAnyAudioFetching,
   onPlayAudio,
 }: ChatMessageDisplayProps) {
   const isUser = message.role === 'user';
@@ -56,7 +56,7 @@ export default function ChatMessageDisplay({
               className="translate-btn" 
               title="Play audio"
               onClick={onPlayAudio}
-              disabled={isTranslating || isAnyAudioFetching}
+              disabled={isTranslating || isFetchingAudio}
             >
               {isFetchingThisAudio ? (
                  <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
@@ -74,7 +74,7 @@ export default function ChatMessageDisplay({
           ) : (
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
-                    <button className="translate-btn" title="Translate message" disabled={!areOnlineActionsAvailable || isPlayingThisAudio || isAnyAudioFetching}>
+                    <button className="translate-btn" title="Translate message" disabled={!areOnlineActionsAvailable || isPlayingThisAudio || isFetchingAudio}>
                         <Languages className="h-4 w-4" />
                     </button>
                 </PopoverTrigger>
