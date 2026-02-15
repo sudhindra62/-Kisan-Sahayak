@@ -70,7 +70,8 @@ export default function Home() {
             annualIncome: data.annualIncome,
             documentSetId: userId,
         };
-        setDocument(farmerProfileRef, farmerProfileForDb, { merge: true });
+        // Temporarily disabled to prevent permission errors until rules are deployed.
+        // setDocument(farmerProfileRef, farmerProfileForDb, { merge: true });
 
         const docRef = doc(firestore, 'users', userId, 'uploaded_documents', userId);
         const docData = {
@@ -82,7 +83,8 @@ export default function Home() {
             uploadTimestamp: Timestamp.fromDate(new Date()),
             verificationStatus: 'Pending',
         };
-        setDocument(docRef, docData, { merge: true });
+        // Temporarily disabled to prevent permission errors until rules are deployed.
+        // setDocument(docRef, docData, { merge: true });
     }
     // --- End Firestore save ---
 
