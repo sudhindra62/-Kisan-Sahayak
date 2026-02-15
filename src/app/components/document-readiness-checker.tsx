@@ -1,12 +1,13 @@
+
 'use client';
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { EligibleScheme } from '@/ai/schemas';
-import { getDocumentReadiness } from '@/app/actions';
 import type { DocumentReadinessOutput } from '@/ai/flows/document-readiness-checker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Bot, FileCheck, FileX, ShieldQuestion, Lightbulb } from 'lucide-react';
+import { checkReadinessOffline } from '@/lib/scheme-engine';
 
 const commonDocuments = [
   'Aadhaar Card',
@@ -94,7 +95,7 @@ export default function DocumentReadinessChecker({
     });
   };
 
-  const handleCheckReadiness = async () => {
+  const handleCheckReadiness = () => {
     if (selectedDocs.length === 0) {
       toast({
         variant: 'destructive',
@@ -105,21 +106,22 @@ export default function DocumentReadinessChecker({
     }
     setIsLoading(true);
     setResults(null);
-    try {
-      const readinessResults = await getDocumentReadiness({
-        userDocuments: selectedDocs,
-        matchedSchemes: eligibleSchemes,
-      });
-      setResults(readinessResults);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to check document readiness. Please try again.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    
+    // Offline logic
+    setTimeout(() => {
+        try {
+            const readinessResults = checkReadinessOffline(selectedDocs);
+            setResults(readinessResults);
+        } catch (error) {
+             toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Failed to check document readiness.',
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    }, 300); // simulate processing
   };
 
   return (
@@ -166,7 +168,7 @@ export default function DocumentReadinessChecker({
           {isLoading ? (
             <>
               <span className="loading-spinner-small mr-3"></span>
-              AI is Checking...
+              Checking...
             </>
           ) : (
             <>
@@ -183,5 +185,3 @@ export default function DocumentReadinessChecker({
     </section>
   );
 }
-
-    

@@ -1,6 +1,7 @@
+
 "use client";
 
-import { ExternalLink, Info, Leaf, Bot, FileText, BookCheck, Clock, AlertTriangle, Phone, ThumbsUp, ChevronsRight } from "lucide-react";
+import { ExternalLink, Info, Leaf, Bot, FileText, BookCheck, Clock, AlertTriangle, Phone, ThumbsUp, ChevronsRight, WifiOff } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +14,7 @@ type SchemeResultsProps = {
   results: SchemeAnalysisOutput | null;
   isLoading: boolean;
   farmerProfile: FarmerProfileInput | null;
+  isOnline: boolean;
 };
 
 const LoadingSkeleton = () => (
@@ -73,6 +75,8 @@ function ApplicationGuideDisplay({ guide }: { guide: SchemeApplicationGuideOutpu
 }
 
 function NearMissAnalysis({ nearMisses }: { nearMisses: NearMiss[] }) {
+    if (!nearMisses || nearMisses.length === 0) return null;
+    
     return (
         <div className="mt-16">
             <h2 className="results-title">Opportunities for Improvement</h2>
@@ -109,7 +113,7 @@ function NearMissAnalysis({ nearMisses }: { nearMisses: NearMiss[] }) {
     );
 }
 
-export default function SchemeResults({ results, isLoading, farmerProfile }: SchemeResultsProps) {
+export default function SchemeResults({ results, isLoading, farmerProfile, isOnline }: SchemeResultsProps) {
   const [guideLoading, setGuideLoading] = useState<string | null>(null);
   const [generatedGuides, setGeneratedGuides] = useState<Record<string, SchemeApplicationGuideOutput>>({});
   const { toast } = useToast();
@@ -120,6 +124,14 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
               variant: "destructive",
               title: "Error",
               description: "Farmer profile is missing. Cannot generate guide.",
+          });
+          return;
+      }
+      if (!isOnline) {
+          toast({
+              variant: "destructive",
+              title: "Offline",
+              description: "An internet connection is required to generate the AI guide.",
           });
           return;
       }
@@ -187,6 +199,7 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
               <div className="result-card" key={index}>
                 <div className="result-card-header">
                     <h3><Leaf className="mr-3 text-current h-6 w-6" /> {scheme.scheme_name}</h3>
+                    <span className="score-badge">{scheme.adjusted_subsidy_amount}</span>
                 </div>
                 
                 <div className="result-section">
@@ -207,7 +220,7 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
                                   handleGenerateGuide(scheme);
                               }
                           }}
-                          disabled={guideLoading === scheme.scheme_name}
+                          disabled={guideLoading === scheme.scheme_name || !isOnline}
                           className="guide-accordion-trigger"
                       >
                           {guideLoading === scheme.scheme_name ? (
@@ -215,6 +228,11 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
                                   <span className="loading-spinner-small mr-3"></span>
                                   Generating Your Guide...
                               </div>
+                          ) : !isOnline ? (
+                            <div className="flex items-center text-slate-400">
+                                <WifiOff className="mr-3 h-5 w-5" />
+                                Connect to Internet for AI Guide
+                            </div>
                           ) : (
                               <div className="flex items-center">
                                   <Bot className="mr-3 h-5 w-5 text-amber-400" />
@@ -227,7 +245,7 @@ export default function SchemeResults({ results, isLoading, farmerProfile }: Sch
                               <ApplicationGuideDisplay guide={generatedGuides[scheme.scheme_name]} />
                           ) : guideLoading !== scheme.scheme_name ? (
                               <div className="p-4 text-center text-slate-400">
-                                  Click to generate a personalized step-by-step guide using AI.
+                                  {isOnline ? 'Click to generate a personalized step-by-step guide using AI.' : 'Please connect to the internet to generate the guide.'}
                               </div>
                           ) : null}
                       </AccordionContent>
