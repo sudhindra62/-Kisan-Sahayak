@@ -43,7 +43,10 @@ export default function Home() {
 
 
   const handleFormSubmit = async (data: FarmerProfileInput, documents: DocumentsState) => {
+    // Set all loading states to true immediately to show all skeletons
     setIsLoading(true);
+    setIsSummaryLoading(true);
+    setIsPredictionsLoading(true);
     setResults(null);
     setSummary(null);
     setPredictions(null);
@@ -56,6 +59,8 @@ export default function Home() {
             description: 'Could not authenticate user. Please try again.',
         });
         setIsLoading(false);
+        setIsSummaryLoading(false);
+        setIsPredictionsLoading(false);
         return;
     }
     const userId = user.uid;
@@ -87,60 +92,77 @@ export default function Home() {
     setDocumentNonBlocking(docRef, docData, { merge: true });
     // --- End Firestore save ---
 
-    try {
-      const eligibilityResults = await getEligibleSchemes(data);
-      setResults(eligibilityResults);
-      setIsLoading(false); // Stop main loading indicator
-
-      // Now, generate the summary and predictions in parallel
-      if (eligibilityResults && (eligibilityResults.eligible_schemes.length > 0 || (eligibilityResults.nearMisses && eligibilityResults.nearMisses.length > 0))) {
-        setIsSummaryLoading(true);
-        setIsPredictionsLoading(true);
-
-        const summaryPromise = getFarmerSummary({
-            farmerProfile: data,
-            analysisResults: eligibilityResults,
-        }).catch(err => {
-            console.error("Error generating summary:", err);
-            toast({
-                variant: "destructive",
-                title: "Warning",
-                description: "Could not generate the final summary report.",
-            });
-            return null; // Return null on error to not break Promise.all
-        });
-
-        const predictionsPromise = getPredictedSchemes(data).catch(err => {
+    // Run predictions and eligibility analysis in parallel
+    getPredictedSchemes(data)
+        .then(predictionsResult => {
+            if (predictionsResult) {
+                setPredictions(predictionsResult);
+            }
+        })
+        .catch(err => {
             console.error("Error generating predictions:", err);
             toast({
                 variant: "destructive",
                 title: "Warning",
                 description: "Could not generate future scheme predictions.",
             });
-            return null; // Return null on error
+            setPredictions(null); // Set to null to hide component on error
+        })
+        .finally(() => {
+            setIsPredictionsLoading(false);
+        });
+
+    getEligibleSchemes(data)
+        .then(eligibilityResults => {
+            setResults(eligibilityResults);
+            setIsLoading(false); // Eligibility results are back
+
+            // Now, if we have results, fetch the summary
+            if (eligibilityResults && (eligibilityResults.eligible_schemes.length > 0 || (eligibilityResults.nearMisses && eligibilityResults.nearMisses.length > 0))) {
+                getFarmerSummary({
+                    farmerProfile: data,
+                    analysisResults: eligibilityResults,
+                })
+                .then(summaryResult => {
+                    if (summaryResult) {
+                        setSummary(summaryResult);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error generating summary:", err);
+                    toast({
+                        variant: "destructive",
+                        title: "Warning",
+                        description: "Could not generate the final summary report.",
+                    });
+                    setSummary(null); // Set to null to hide component on error
+                })
+                .finally(() => {
+                    setIsSummaryLoading(false);
+                });
+            } else {
+                // If no eligible schemes, we don't need a summary.
+                setIsSummaryLoading(false);
+                setSummary(null);
+            }
+        })
+        .catch(error => {
+            console.error("Error analyzing eligibility:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to analyze scheme eligibility. Please try again.",
+            });
+            // Stop all loading states on critical failure
+            setIsLoading(false);
+            setIsSummaryLoading(false);
+            setIsPredictionsLoading(false); // Also stop predictions loading
+            setResults(null);
+            setSummary(null);
+            setPredictions(null);
         });
         
-        const [summaryResult, predictionsResult] = await Promise.all([
-            summaryPromise,
-            predictionsPromise
-        ]);
-
-        if (summaryResult) setSummary(summaryResult);
-        if (predictionsResult) setPredictions(predictionsResult);
-
-        setIsSummaryLoading(false);
-        setIsPredictionsLoading(false);
-      }
-
-    } catch (error) {
-      console.error("Error analyzing eligibility:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to analyze scheme eligibility. Please try again.",
-      });
-      setIsLoading(false);
-    } 
+    // We don't await the promises here. The UI will update reactively as each one completes.
   };
 
   return (
@@ -154,7 +176,7 @@ export default function Home() {
             </p>
             <FarmerProfileForm 
               onSubmit={handleFormSubmit} 
-              isLoading={isLoading}
+              isLoading={isLoading || isSummaryLoading || isPredictionsLoading}
               userId={user?.uid}
               isUserLoading={isUserLoading}
             />
