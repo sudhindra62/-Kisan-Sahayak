@@ -1,0 +1,124 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    # Checkout code
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Setup Node.js
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    # Install dependencies
+    - name: Install dependencies
+      run: npm ci
+
+    # Run linter (if configured)
+    - name: Run ESLint
+      run: npm run lint --if-present
+      continue-on-error: true
+
+    # Type checking
+    - name: Type check with TypeScript
+      run: npx tsc --noEmit
+      continue-on-error: true
+
+    # Build project
+    - name: Build Next.js project
+      run: npm run build
+
+    # Run tests (if configured)
+    - name: Run tests
+      run: npm test --if-present
+      continue-on-error: true
+
+    # Build output size check
+    - name: Check build size
+      run: |
+        if [ -d ".next" ]; then
+          du -sh .next/
+          echo "Build completed successfully"
+        fi
+
+  # Security scan job
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Dependency vulnerability scan
+    - name: Run npm security audit
+      run: npm audit --audit-level=moderate
+      continue-on-error: true
+
+  # Code quality job
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    # Check for unused dependencies
+    - name: Check for unused dependencies
+      run: npx depcheck --ignore-dirs node_modules
+      continue-on-error: true
+
+  # Deploy job (optional)
+  deploy:
+    needs: [build, security, quality]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build project
+      run: npm run build
+
+    # Add your deployment steps here
+    # Example: Deploy to Firebase Hosting
+    - name: Deploy to Firebase
+      if: github.repository == 'sudhindra62/KisanSahayak'
+      run: |
+        echo "Deployment step - Add your Firebase deployment command here"
+        # firebase deploy --token ${{ secrets.FIREBASE_TOKEN }}
+      continue-on-error: true
