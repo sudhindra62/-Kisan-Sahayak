@@ -339,7 +339,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             message={msg} 
             isTranslating={translatingMessageIndex === index}
             onTranslate={(lang) => handleTranslateMessage(index, lang)}
-            isAudioAvailable={isOnline && msg.role === 'model' && !!msg.originalContent}
+            areOnlineActionsAvailable={isOnline && msg.role === 'model' && !!msg.originalContent}
             isCurrentlyPlaying={currentlyPlaying === msg.originalContent}
             onPlayAudio={() => playAudio(msg.originalContent)}
           />

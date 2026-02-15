@@ -10,7 +10,7 @@ type ChatMessageDisplayProps = {
   message: ChatMessage;
   onTranslate: (targetLanguage: string) => void;
   isTranslating: boolean;
-  isAudioAvailable: boolean;
+  areOnlineActionsAvailable: boolean;
   isCurrentlyPlaying: boolean;
   onPlayAudio: () => void;
 };
@@ -24,7 +24,7 @@ export default function ChatMessageDisplay({
   message, 
   onTranslate, 
   isTranslating,
-  isAudioAvailable,
+  areOnlineActionsAvailable,
   isCurrentlyPlaying,
   onPlayAudio,
 }: ChatMessageDisplayProps) {
@@ -47,7 +47,7 @@ export default function ChatMessageDisplay({
       
       {!isUser && (
         <div className="message-actions">
-          {isAudioAvailable && (
+          {areOnlineActionsAvailable && (
             <button 
               className="translate-btn" 
               title="Play audio"
@@ -68,7 +68,7 @@ export default function ChatMessageDisplay({
           ) : (
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
-                    <button className="translate-btn" title="Translate message" disabled={!isAudioAvailable}>
+                    <button className="translate-btn" title="Translate message" disabled={!areOnlineActionsAvailable}>
                         <Languages className="h-4 w-4" />
                     </button>
                 </PopoverTrigger>
