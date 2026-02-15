@@ -8,6 +8,7 @@ import type { ChatMessage, FarmerProfileInput } from '@/ai/schemas';
 import { getChatbotResponse, translateText, textToSpeech } from '@/app/actions';
 import ChatMessageDisplay from './ChatMessage';
 import Link from 'next/link';
+import { getOfflineChatbotResponse } from '@/lib/offline-chat-engine';
 
 declare global {
     interface Window {
@@ -137,56 +138,75 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const handleSendMessage = async (e?: React.FormEvent, messageContent?: string) => {
     if (e) e.preventDefault();
     const content = (messageContent || input).trim();
-    if (!content || isSending || !isOnline) return;
+    if (!content || isSending) return;
 
     const userMessage: DisplayMessage = { role: 'user', content };
-    const newMessages: DisplayMessage[] = [...messages, userMessage];
+    const newMessagesWithUser = [...messages, userMessage];
     
-    setMessages(newMessages); // Optimistically update UI
+    setMessages(newMessagesWithUser);
     setInput('');
     setIsSending(true);
 
-    try {
-        const historyForAI = messages.map(m => ({
-            role: m.role,
-            content: m.originalContent || m.content,
-        }));
+    let aiMessage: DisplayMessage;
 
-        const aiResponse = await getChatbotResponse({
-            farmerProfile,
-            history: historyForAI, 
-            message: content,
-        });
-
-        const aiMessage: DisplayMessage = { 
-            role: 'model', 
-            content: aiResponse,
-            originalContent: aiResponse // Store original response
-        };
-        
-        const finalMessages = [...newMessages, aiMessage];
-        setMessages(finalMessages); // Update UI with AI response
-        
-        if (chatHistoryRef) {
-            const historyToSave = finalMessages.map(m => ({
+    if (isOnline) {
+        try {
+            const historyForAI = messages.map(m => ({
                 role: m.role,
-                content: m.originalContent || m.content
+                content: m.originalContent || m.content,
             }));
-            setDocumentNonBlocking(chatHistoryRef, { 
-                id: userId,
-                messages: historyToSave,
-                updatedAt: new Date().toISOString()
-            }, { merge: true });
-        }
-        
-        playAudio(aiResponse);
 
-    } catch (error) {
-      console.error("Failed to get chat response:", error);
-      const errorMessage: DisplayMessage = { role: 'model', content: 'Sorry, I couldn\'t connect to the AI assistant. Please check your internet connection and try again.', originalContent: 'Sorry, I couldn\'t connect to the AI assistant. Please check your internet connection and try again.'};
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-        setIsSending(false);
+            const aiResponse = await getChatbotResponse({
+                farmerProfile,
+                history: historyForAI, 
+                message: content,
+            });
+
+            aiMessage = { 
+                role: 'model', 
+                content: aiResponse,
+                originalContent: aiResponse
+            };
+            
+            playAudio(aiResponse);
+
+        } catch (error) {
+            console.error("Failed to get chat response:", error);
+            aiMessage = { role: 'model', content: 'Sorry, I couldn\'t connect to the AI assistant. Please check your internet connection and try again.', originalContent: 'Sorry, I couldn\'t connect to the AI assistant. Please check your internet connection and try again.'};
+        }
+    } else {
+        const offlineResponse = getOfflineChatbotResponse(content, farmerProfile);
+        aiMessage = { 
+            role: 'model', 
+            content: offlineResponse,
+            originalContent: offlineResponse
+        };
+    }
+
+    const finalMessages = [...newMessagesWithUser, aiMessage];
+    
+    // Use a short delay for offline responses to feel more natural
+    const updateState = () => {
+      setMessages(finalMessages);
+      setIsSending(false);
+
+      if (isOnline && chatHistoryRef && !aiMessage.content.startsWith('Sorry')) {
+          const historyToSave = finalMessages.map(m => ({
+              role: m.role,
+              content: m.originalContent || m.content
+          }));
+          setDocumentNonBlocking(chatHistoryRef, { 
+              id: userId,
+              messages: historyToSave,
+              updatedAt: new Date().toISOString()
+          }, { merge: true });
+      }
+    };
+
+    if (isOnline) {
+      updateState();
+    } else {
+      setTimeout(updateState, 500);
     }
   };
 
@@ -259,7 +279,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     recognitionRef.current.start();
   };
 
-  const isChatDisabled = isSending || isHistoryLoading || !isOnline;
+  const isChatDisabled = isSending || isHistoryLoading;
 
   return (
     <div className="chat-page-container">
@@ -290,7 +310,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             message={msg} 
             isTranslating={translatingMessageIndex === index}
             onTranslate={(lang) => handleTranslateMessage(index, lang)}
-            isAudioAvailable={msg.role === 'model' && !!msg.originalContent}
+            isAudioAvailable={isOnline && msg.role === 'model' && !!msg.originalContent}
             isCurrentlyPlaying={currentlyPlaying === msg.originalContent}
             onPlayAudio={() => playAudio(msg.originalContent)}
           />
@@ -311,7 +331,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
 
       <div className="chat-footer">
         <form onSubmit={handleSendMessage} className="chat-input-form">
-          <div className="voice-lang-selector">
+          {speechApiSupported && (<div className="voice-lang-selector">
             <Languages className="h-4 w-4" />
             <select
                 value={speechLang}
@@ -323,12 +343,12 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
                     <option key={lang.code} value={lang.code}>{lang.name}</option>
                 ))}
             </select>
-          </div>
+          </div>)}
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={!isOnline ? "You are offline. Please reconnect." : (isRecording ? "Listening..." : "Ask me anything...")}
+            placeholder={isRecording ? "Listening..." : "Ask me anything..."}
             className="chat-input"
             disabled={isChatDisabled}
           />

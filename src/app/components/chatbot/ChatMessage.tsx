@@ -68,7 +68,7 @@ export default function ChatMessageDisplay({
           ) : (
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
-                    <button className="translate-btn" title="Translate message">
+                    <button className="translate-btn" title="Translate message" disabled={!isAudioAvailable}>
                         <Languages className="h-4 w-4" />
                     </button>
                 </PopoverTrigger>
