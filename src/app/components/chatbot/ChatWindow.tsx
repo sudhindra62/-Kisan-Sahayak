@@ -126,6 +126,8 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
         let toastDescription = `Could not generate audio. Please try again.`;
         if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
             toastDescription = 'The voice service is currently experiencing high demand. Please try again in a moment.';
+        } else if (errorMessage.toLowerCase().includes('api key')) {
+            toastDescription = 'The API key for the voice service is missing or invalid. Please check your configuration.';
         }
 
         toast({
