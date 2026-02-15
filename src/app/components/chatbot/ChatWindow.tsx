@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -123,8 +122,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
 
     if (response.error) {
         const errorMessage = response.error;
-        console.error("TTS Error:", errorMessage);
-
+        
         let toastDescription = `Could not generate audio. Please try again.`;
         if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
             toastDescription = 'The voice service is currently experiencing high demand. Please try again in a moment.';
@@ -300,7 +298,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
         toast({
             variant: 'destructive',
             title: 'Unsupported Browser',
-            description: 'Sorry, your browser doesn\'t support speech recognition.',
+            description: "Sorry, your browser doesn't support speech recognition.",
         });
         return;
     }
