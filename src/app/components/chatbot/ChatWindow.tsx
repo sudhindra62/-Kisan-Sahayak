@@ -52,7 +52,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [speechLang, setSpeechLang] = useState('en-IN');
   const [audioDataCache, setAudioDataCache] = useState<Record<string, string>>({});
-  const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
+  const [currentlyPlayingIndex, setCurrentlyPlayingIndex] = useState<number | null>(null);
   const { toast } = useToast();
 
   const firestore = useFirestore();
@@ -141,34 +141,37 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     return response.audioData;
   }
 
-  const playAudio = async (textContent: string | undefined) => {
+  const playAudio = async (textContent: string | undefined, index: number) => {
     if (!textContent || !audioPlayerRef.current) return;
     
-    if (currentlyPlaying === textContent) {
+    // If clicking the currently playing message, stop it.
+    if (currentlyPlayingIndex === index) {
         audioPlayerRef.current.pause();
         audioPlayerRef.current.currentTime = 0;
-        setCurrentlyPlaying(null);
+        setCurrentlyPlayingIndex(null);
         return;
     }
 
-    setCurrentlyPlaying(textContent);
+    setCurrentlyPlayingIndex(index);
     const audioSrc = await handleTextToSpeech(textContent);
     
     if (audioSrc && audioPlayerRef.current) {
+        // Guard against race condition: if user clicks another play button while TTS is fetching, don't play the old one.
+        if (currentlyPlayingIndex !== index) return;
+
         audioPlayerRef.current.src = audioSrc;
         audioPlayerRef.current.play().catch(e => {
-            console.error("Audio play failed", e);
             toast({
                 variant: 'destructive',
                 title: 'Audio Playback Error',
                 description: 'Could not play the generated audio file.',
             });
             // Reset state if playback fails to start
-            setCurrentlyPlaying(null);
+            setCurrentlyPlayingIndex(null);
         });
     } else {
         // If audioSrc is null (because of TTS error), reset playing state
-        setCurrentlyPlaying(null);
+        setCurrentlyPlayingIndex(null);
     }
   }
 
@@ -205,7 +208,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
                 originalContent: aiResponse
             };
             
-            playAudio(aiResponse);
+            playAudio(aiResponse, newMessagesWithUser.length); // Play audio for new message
 
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -258,7 +261,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             content: messageToTranslate.originalContent,
         };
         setMessages(updatedMessages);
-        playAudio(messageToTranslate.originalContent);
+        playAudio(messageToTranslate.originalContent, messageIndex);
         return;
     }
 
@@ -275,7 +278,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             content: response.translatedText,
         };
         setMessages(updatedMessages);
-        playAudio(response.translatedText);
+        playAudio(response.translatedText, messageIndex);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         toast({
@@ -357,7 +360,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
 
   return (
     <div className="chat-page-container">
-      <audio ref={audioPlayerRef} onEnded={() => setCurrentlyPlaying(null)} className="hidden" />
+      <audio ref={audioPlayerRef} onEnded={() => setCurrentlyPlayingIndex(null)} className="hidden" />
       <div className="chat-header">
         <Link href="/" className="chat-back-btn">
             <ArrowLeft className="h-5 w-5" />
@@ -385,8 +388,8 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             isTranslating={translatingMessageIndex === index}
             onTranslate={(lang) => handleTranslateMessage(index, lang)}
             areOnlineActionsAvailable={isOnline}
-            isCurrentlyPlaying={currentlyPlaying === msg.content}
-            onPlayAudio={() => playAudio(msg.content)}
+            isCurrentlyPlaying={currentlyPlayingIndex === index}
+            onPlayAudio={() => playAudio(msg.content, index)}
           />
         ))}
          {isSending && (

@@ -52,7 +52,7 @@ export default function ChatMessageDisplay({
               className="translate-btn" 
               title="Play audio"
               onClick={onPlayAudio}
-              disabled={isCurrentlyPlaying}
+              disabled={isTranslating} // Disable play while translating
             >
               {isCurrentlyPlaying ? (
                  <Waves className="h-4 w-4 text-amber-400" />
@@ -68,7 +68,7 @@ export default function ChatMessageDisplay({
           ) : (
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
-                    <button className="translate-btn" title="Translate message" disabled={!areOnlineActionsAvailable}>
+                    <button className="translate-btn" title="Translate message" disabled={!areOnlineActionsAvailable || isCurrentlyPlaying}>
                         <Languages className="h-4 w-4" />
                     </button>
                 </PopoverTrigger>
