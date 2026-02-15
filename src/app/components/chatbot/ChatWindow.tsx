@@ -38,21 +38,21 @@ const speechLanguages = [
 
 export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<DisplayMessage[]>([initialMessage]);
-  const [isSending, setIsSending] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
+  const [messages, setMessages = useState<DisplayMessage[]>([initialMessage]);
+  const [isSending, setIsSending = useState(false);
+  const [isOnline, setIsOnline = useState(true);
   const chatBodyRef = useRef<HTMLDivElement>(null);
   const audioPlayerRef = useRef<HTMLAudioElement>(null);
   const recognitionRef = useRef<any>(null);
 
-  const [translatingMessageIndex, setTranslatingMessageIndex] = useState<number | null>(null);
+  const [translatingMessageIndex, setTranslatingMessageIndex = useState<number | null>(null);
   
   // Voice state
-  const [speechApiSupported, setSpeechApiSupported] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [speechLang, setSpeechLang] = useState('en-IN');
-  const [audioDataCache, setAudioDataCache] = useState<Record<string, string>>({});
-  const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
+  const [speechApiSupported, setSpeechApiSupported = useState(false);
+  const [isRecording, setIsRecording = useState(false);
+  const [speechLang, setSpeechLang = useState('en-IN');
+  const [audioDataCache, setAudioDataCache = useState<Record<string, string>>({});
+  const [currentlyPlaying, setCurrentlyPlaying = useState<string | null>(null);
   const { toast } = useToast();
 
   const firestore = useFirestore();
@@ -109,30 +109,50 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     }
   }, [messages, isSending, translatingMessageIndex]);
 
-  const handleTextToSpeech = async (originalContent: string) => {
-    if (!originalContent || audioDataCache[originalContent]) {
-      return audioDataCache[originalContent] || null;
+  const handleTextToSpeech = async (textContent: string) => {
+    if (!textContent) {
+      return null;
+    }
+    // Check cache first
+    if (audioDataCache[textContent]) {
+      return audioDataCache[textContent];
     }
     try {
-        const response = await textToSpeech({ text: originalContent });
-        setAudioDataCache(prev => ({...prev, [originalContent]: response.audioData}));
+        const response = await textToSpeech({ text: textContent });
+        setAudioDataCache(prev => ({...prev, [textContent]: response.audioData}));
         return response.audioData;
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         console.error("TTS Error:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Text-to-Speech Error',
+            description: `Could not generate audio. Reason: ${errorMessage}`,
+        });
         return null;
     }
   }
 
-  const playAudio = async (originalContent: string | undefined) => {
-    if (!originalContent || !audioPlayerRef.current) return;
+  const playAudio = async (textContent: string | undefined) => {
+    if (!textContent || !audioPlayerRef.current) return;
     
-    setCurrentlyPlaying(originalContent);
-    const audioSrc = await handleTextToSpeech(originalContent);
+    setCurrentlyPlaying(textContent);
+    const audioSrc = await handleTextToSpeech(textContent);
     
     if (audioSrc && audioPlayerRef.current) {
         audioPlayerRef.current.src = audioSrc;
-        audioPlayerRef.current.play().catch(e => console.error("Audio play failed", e));
+        audioPlayerRef.current.play().catch(e => {
+            console.error("Audio play failed", e);
+            toast({
+                variant: 'destructive',
+                title: 'Audio Playback Error',
+                description: 'Could not play the generated audio file.',
+            });
+            // Reset state if playback fails to start
+            setCurrentlyPlaying(null);
+        });
     } else {
+        // If audioSrc is null (because of TTS error), reset playing state
         setCurrentlyPlaying(null);
     }
   }
@@ -187,7 +207,6 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
 
     const finalMessages = [...newMessagesWithUser, aiMessage];
     
-    // Use a short delay for offline responses to feel more natural
     const updateState = () => {
       setMessages(finalMessages);
       setIsSending(false);
@@ -200,7 +219,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
           setDocument(chatHistoryRef, { 
               id: userId,
               messages: historyToSave,
-              updatedAt: new Date().toISOString()
+              updatedAt: new Date()
           }, { merge: true });
       }
     };
@@ -283,7 +302,6 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
                 errorMessage = 'A network error occurred. Please check your connection.';
                 break;
             case 'aborted':
-                // Don't show an error if the user manually stops it or it times out.
                 return;
         }
         toast({
@@ -340,8 +358,8 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             isTranslating={translatingMessageIndex === index}
             onTranslate={(lang) => handleTranslateMessage(index, lang)}
             areOnlineActionsAvailable={isOnline && msg.role === 'model' && !!msg.originalContent}
-            isCurrentlyPlaying={currentlyPlaying === msg.originalContent}
-            onPlayAudio={() => playAudio(msg.originalContent)}
+            isCurrentlyPlaying={currentlyPlaying === msg.content}
+            onPlayAudio={() => playAudio(msg.content)}
           />
         ))}
          {isSending && (
@@ -394,3 +412,5 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     </div>
   );
 }
+
+    
