@@ -6,8 +6,6 @@ import {
   Auth,
   getAuth,
   signInAnonymously,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
 } from 'firebase/auth';
 import {
   getFirestore,
@@ -72,42 +70,19 @@ export function initiateAnonymousSignIn(authInstance: Auth): void {
   });
 }
 
-export function initiateEmailSignUp(
-  authInstance: Auth,
-  email: string,
-  password: string
-): void {
-  createUserWithEmailAndPassword(authInstance, email, password).catch(
-    (error) => {
-      console.error('Email sign-up failed:', error);
-    }
-  );
-}
-
-export function initiateEmailSignIn(
-  authInstance: Auth,
-  email: string,
-  password: string
-): void {
-  signInWithEmailAndPassword(authInstance, email, password).catch((error) => {
-    console.error('Email sign-in failed:', error);
-  });
-}
-
-
 // -- Firestore --
 
 export function setDocument(
   docRef: DocumentReference,
   data: any,
-  options: SetOptions
+  options?: SetOptions
 ) {
-  firestoreSetDoc(docRef, data, options).catch((error) => {
+  firestoreSetDoc(docRef, data, options || {}).catch((error) => {
     errorEmitter.emit(
       'permission-error',
       new FirestorePermissionError({
         path: docRef.path,
-        operation: options.merge ? 'update' : 'create',
+        operation: options?.merge ? 'update' : 'create',
         requestResourceData: data,
       })
     );

@@ -79,7 +79,7 @@ export default function Home() {
             incomeCertificateUrl: documents.incomeCertificateUrl || null,
             identityProofUrl: documents.identityProofUrl || null,
             damagedCropImageUrl: documents.damagedCropImageUrl || null,
-            uploadTimestamp: new Date().toISOString(),
+            uploadTimestamp: new Date(),
             verificationStatus: 'Pending',
         };
         setDocument(docRef, docData, { merge: true });
