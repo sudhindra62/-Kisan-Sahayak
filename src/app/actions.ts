@@ -1,3 +1,4 @@
+
 "use server";
 
 import {
@@ -48,8 +49,9 @@ export async function getEligibleSchemes(
     const result = await analyzeFarmerSchemeEligibility(data);
     return result;
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Error in getEligibleSchemes server action:", error);
-    throw new Error("Failed to communicate with the eligibility analysis service.");
+    throw new Error(`Failed to communicate with the eligibility analysis service. Reason: ${errorMessage}`);
   }
 }
 
@@ -60,8 +62,9 @@ export async function getSchemeApplicationGuide(
         const result = await generateSchemeApplicationGuide(data);
         return result;
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("Error in getSchemeApplicationGuide server action:", error);
-        throw new Error("Failed to generate the application guide.");
+        throw new Error(`Failed to generate the application guide. Reason: ${errorMessage}`);
     }
 }
 
@@ -72,8 +75,9 @@ export async function getFarmerSummary(
         const result = await generateFarmerSummary(data);
         return result;
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("Error in getFarmerSummary server action:", error);
-        throw new Error("Failed to generate the farmer summary.");
+        throw new Error(`Failed to generate the farmer summary. Reason: ${errorMessage}`);
     }
 }
 
@@ -84,8 +88,9 @@ export async function getDocumentReadiness(
         const result = await checkDocumentReadiness(data);
         return result;
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("Error in getDocumentReadiness server action:", error);
-        throw new Error("Failed to check document readiness.");
+        throw new Error(`Failed to check document readiness. Reason: ${errorMessage}`);
     }
 }
 
@@ -96,8 +101,9 @@ export async function getPredictedSchemes(
         const result = await predictUpcomingSchemes(data);
         return result;
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("Error in getPredictedSchemes server action:", error);
-        throw new Error("Failed to generate scheme predictions.");
+        throw new Error(`Failed to generate scheme predictions. Reason: ${errorMessage}`);
     }
 }
 
@@ -106,8 +112,9 @@ export async function getChatbotResponse(data: ChatbotInput): Promise<string> {
         const result = await getChatbotResponseFlow(data);
         return result;
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("Error in getChatbotResponse server action:", error);
-        throw new Error("Failed to get response from AI assistant.");
+        throw new Error(`Failed to get response from AI assistant. Reason: ${errorMessage}`);
     }
 }
 
@@ -116,8 +123,9 @@ export async function translateText(data: TranslateTextInput): Promise<Translate
         const result = await translateTextFlow(data);
         return result;
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("Error in translateText server action:", error);
-        throw new Error("Failed to translate text.");
+        throw new Error(`Failed to translate text. Reason: ${errorMessage}`);
     }
 }
 
@@ -126,7 +134,8 @@ export async function textToSpeech(data: TextToSpeechInput): Promise<TextToSpeec
         const result = await textToSpeechFlow(data);
         return result;
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("Error in textToSpeech server action:", error);
-        throw new Error("Failed to convert text to speech.");
+        throw new Error(`Failed to convert text to speech. Reason: ${errorMessage}`);
     }
 }
