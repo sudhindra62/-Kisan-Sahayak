@@ -170,7 +170,7 @@ export default function Home() {
         <div className="center-blend"></div>
         <div className="center-glow"></div>
         <div className="form-container">
-            <h1>KisanSahayak AI</h1>
+            <h1>KisanSahayak</h1>
             <p>
                 Enter your details below to discover government schemes tailored to your needs and get guidance on how to apply.
             </p>

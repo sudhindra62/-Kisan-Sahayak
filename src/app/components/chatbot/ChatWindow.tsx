@@ -25,7 +25,7 @@ interface DisplayMessage extends ChatMessage {
   originalContent?: string; // The original English message from the AI
 }
 
-const initialMessage: DisplayMessage = { role: 'model', content: 'Hello! I am your KisanSahayak AI assistant. How can I help you today?' };
+const initialMessage: DisplayMessage = { role: 'model', content: 'Hello! I am your KisanSahayak assistant. How can I help you today?' };
 initialMessage.originalContent = initialMessage.content;
 
 const speechLanguages = [
