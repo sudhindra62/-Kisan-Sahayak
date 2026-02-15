@@ -114,15 +114,17 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
 
   const handleAudioEnd = () => {
     setAudioPlayingIndex(null);
-    isFetchingAudioRef.current = false;
+    isFetchingAudioRef.current = false; // Release lock
     setIsFetchingAudio(false);
   };
 
   const handleAudioPause = () => {
+    // This handler is called when playback is paused, either by the user
+    // or by the system. We only reset the visual state here.
+    // The lock is managed explicitly in the playAudio function.
     setAudioPlayingIndex(null);
-    isFetchingAudioRef.current = false;
-    setIsFetchingAudio(false);
   };
+
 
   const handleTextToSpeech = async (textContent: string) => {
     if (!textContent) {
@@ -148,49 +150,81 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   }
 
   const playAudio = async (textContent: string | undefined, index: number) => {
-    if (isFetchingAudioRef.current) {
+    // Stricter lock: prevent new requests if one is already in flight.
+    // Allow clicking the same icon again to act as a "stop" button.
+    if (isFetchingAudioRef.current && audioPlayingIndex !== index) {
+      toast({
+            variant: 'destructive',
+            title: 'Audio In Progress',
+            description: "Please wait for the current audio to finish before playing another.",
+        });
       return;
     }
     if (!textContent || !audioPlayerRef.current) return;
 
-    if (audioPlayingIndex === index) {
+    // If the user clicks the currently playing/loading icon, treat it as a stop command.
+    if (audioPlayingIndex === index || audioLoadingIndex === index) {
       audioPlayerRef.current.pause();
+      isFetchingAudioRef.current = false; // Manually release the lock
+      setIsFetchingAudio(false);
+      setAudioPlayingIndex(null);
+      setAudioLoadingIndex(null);
       return;
     }
 
+    // If another audio is playing, pause it. This will trigger its onPause handler.
     if (!audioPlayerRef.current.paused) {
       audioPlayerRef.current.pause();
     }
 
+    // --- ACQUIRE LOCK ---
     isFetchingAudioRef.current = true;
     setIsFetchingAudio(true);
     setAudioLoadingIndex(index);
     
     try {
       const audioSrc = await handleTextToSpeech(textContent);
+      
+      // If the request was stopped while fetching, audioSrc might be null or the loadingIndex changed.
+      if (audioLoadingIndex !== index) {
+          isFetchingAudioRef.current = false;
+          setIsFetchingAudio(false);
+          return;
+      }
+      
       setAudioLoadingIndex(null);
 
       if (audioSrc && audioPlayerRef.current) {
         audioPlayerRef.current.src = audioSrc;
         setAudioPlayingIndex(index);
         audioPlayerRef.current.play().catch((e) => {
-          toast({
-            variant: 'destructive',
-            title: 'Audio Playback Error',
-            description: 'Could not play the generated audio file.',
-          });
-          handleAudioPause();
+          if ((e as DOMException).name !== 'AbortError') {
+             toast({
+                variant: 'destructive',
+                title: 'Audio Playback Error',
+                description: 'Could not play the generated audio file.',
+             });
+          }
+          // If play fails for any reason, release the lock.
+          isFetchingAudioRef.current = false;
+          setIsFetchingAudio(false);
+          setAudioPlayingIndex(null);
         });
       } else {
+        // If handleTextToSpeech fails (e.g., returns null), release the lock.
         isFetchingAudioRef.current = false;
         setIsFetchingAudio(false);
       }
     } catch (e) {
       console.error("Unexpected error in playAudio:", e);
+      // Ensure lock is released on any unexpected error.
+      isFetchingAudioRef.current = false;
+      setIsFetchingAudio(false);
       setAudioLoadingIndex(null);
-      handleAudioPause();
+      setAudioPlayingIndex(null);
     }
   };
+
 
   const handleSendMessage = async (e?: React.FormEvent, messageContent?: string) => {
     if (e) e.preventDefault();
@@ -266,6 +300,15 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const handleTranslateMessage = async (messageIndex: number, targetLanguage: string) => {
     const messageToTranslate = messages[messageIndex];
     if (messageToTranslate.role !== 'model' || !messageToTranslate.originalContent) return;
+
+    if (isFetchingAudioRef.current) {
+        toast({
+            variant: "destructive",
+            title: "Action Blocked",
+            description: "Cannot translate while audio is being generated or played.",
+        });
+        return;
+    }
 
     if (audioPlayerRef.current && !audioPlayerRef.current.paused) {
       audioPlayerRef.current.pause();
