@@ -13,7 +13,6 @@ import {
   TextToSpeechOutputSchema,
 } from '@/ai/schemas';
 import wav from 'wav';
-import { googleAI } from '@genkit-ai/google-genai';
 
 async function toWav(
   pcmData: Buffer,
@@ -56,7 +55,7 @@ const textToSpeechFlow = ai.defineFlow(
   },
   async (input) => {
     const { media } = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash-preview-tts'),
+      model: 'googleai/gemini-2.5-flash-preview-tts',
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {
