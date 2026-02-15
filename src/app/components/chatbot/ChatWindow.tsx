@@ -121,19 +121,11 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     const response = await textToSpeech({ text: textContent });
 
     if (response.error) {
-        const errorMessage = response.error;
-        
-        let toastDescription = `Could not generate audio. Please try again.`;
-        if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
-            toastDescription = 'The voice service is currently experiencing high demand. Please try again in a moment.';
-        } else if (errorMessage.toLowerCase().includes('api key')) {
-            toastDescription = 'The API key for the voice service is missing or invalid. Please check your configuration.';
-        }
-
+        // The server now provides the user-friendly error message directly.
         toast({
             variant: 'destructive',
             title: 'Text-to-Speech Error',
-            description: toastDescription,
+            description: response.error,
         });
         return null;
     }

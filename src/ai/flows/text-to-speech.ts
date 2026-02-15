@@ -42,6 +42,29 @@ async function toWav(
   });
 }
 
+function formatTtsError(error: any): string {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    // Log the full technical error on the server for debugging purposes.
+    console.error(`[TTS Flow Error]: ${errorMessage}`);
+
+    if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
+        return 'The voice service is currently experiencing high demand. Please try again in a moment.';
+    }
+    if (errorMessage.toLowerCase().includes('api key')) {
+        return 'The API key for the voice service is missing or invalid. Please check your server configuration.';
+    }
+    if (errorMessage.includes('No audio media was returned')) {
+        return 'The AI service did not return any audio. This may be a temporary issue.';
+    }
+    if (errorMessage.includes('Input text cannot be empty')) {
+        return 'Cannot generate audio from an empty message.';
+    }
+
+    // A generic, but still informative, fallback for other types of errors.
+    return 'An unexpected error occurred while generating audio. Please try again later.';
+}
+
+
 export async function textToSpeech(
   input: TextToSpeechInput
 ): Promise<TextToSpeechOutput> {
@@ -56,16 +79,14 @@ const textToSpeechFlow = ai.defineFlow(
   },
   async (input): Promise<TextToSpeechOutput> => {
     try {
-      // Explicitly check for API key configuration on the server.
       if (!process.env.VOICE_GEMINI_API_KEY && !process.env.GEMINI_API_KEY) {
         throw new Error(
-          'The API key for the voice service is not configured on the server. Please set VOICE_GEMINI_API_KEY or GEMINI_API_KEY in your environment variables.'
+          'API key not configured on the server.'
         );
       }
 
-      // Prevent requests with empty text.
       if (!input.text) {
-        return { audioData: '', error: 'Input text cannot be empty.' };
+        throw new Error('Input text cannot be empty.');
       }
 
       const { media } = await voiceAi.generate({
@@ -74,7 +95,6 @@ const textToSpeechFlow = ai.defineFlow(
           responseModalities: ['AUDIO'],
           speechConfig: {
             voiceConfig: {
-              // A standard, clear voice. Others include 'Algenib', 'Achernar', etc.
               prebuiltVoiceConfig: { voiceName: 'Chara' },
             },
           },
@@ -97,11 +117,8 @@ const textToSpeechFlow = ai.defineFlow(
         audioData: 'data:audio/wav;base64,' + wavBase64,
       };
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : String(e);
-      // Log the full error on the server for easier debugging.
-      console.error(`[TTS Flow Error]: ${errorMessage}`);
-      // Return a structured error payload to the client.
-      return { audioData: '', error: errorMessage };
+      const userFriendlyError = formatTtsError(e);
+      return { audioData: '', error: userFriendlyError };
     }
   }
 );
