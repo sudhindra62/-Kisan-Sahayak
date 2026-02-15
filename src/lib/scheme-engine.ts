@@ -138,6 +138,12 @@ export function analyzeSchemesOffline(farmerProfile: FarmerProfileInput): Scheme
     };
 }
 
+export interface DocumentReadinessOutput {
+  missing_documents: string[];
+  optional_alternatives: string[];
+  readiness_status: string;
+}
+
 export function checkReadinessOffline(selectedDocs: string[]): DocumentReadinessOutput {
     const requiredForMostSchemes = [
       'Aadhaar Card',

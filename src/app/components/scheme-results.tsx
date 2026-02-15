@@ -40,12 +40,12 @@ function ApplicationGuideDisplay({ guide }: { guide: SchemeApplicationGuideOutpu
             <div className="guide-section">
                 <h5 className="guide-title"><FileText className="mr-3 h-5 w-5" /> Documents Required</h5>
                 <ul className="guide-list">
-                    {guide.documentsRequired.map((doc, i) => <li key={i}>{doc}</li>)}
+                    {guide.documentsRequired.map((doc: string, i: number) => <li key={i}>{doc}</li>)}
                 </ul>
             </div>
             <div className="guide-section">
                 <h5 className="guide-title"><BookCheck className="mr-3 h-5 w-5" /> Application Steps</h5>
-                {guide.applicationSteps.map(step => (
+                {guide.applicationSteps.map((step: any) => (
                     <div key={step.step} className="step">
                         <div className="step-header">
                             <span className="step-number">{step.step}</span>
@@ -63,7 +63,7 @@ function ApplicationGuideDisplay({ guide }: { guide: SchemeApplicationGuideOutpu
              <div className="guide-section">
                 <h5 className="guide-title"><AlertTriangle className="mr-3 h-5 w-5" /> Common Mistakes to Avoid</h5>
                  <ul className="guide-list">
-                    {guide.commonMistakes.map((tip, i) => <li key={i}>{tip}</li>)}
+                    {guide.commonMistakes.map((tip: string, i: number) => <li key={i}>{tip}</li>)}
                 </ul>
             </div>
             <div className="guide-section">

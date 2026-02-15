@@ -13,6 +13,8 @@ import {
   SchemeApplicationGuideOutputSchema,
 } from '@/ai/schemas';
 
+export type { SchemeApplicationGuideOutput };
+
 export async function generateSchemeApplicationGuide(
   input: SchemeApplicationGuideInput
 ): Promise<SchemeApplicationGuideOutput> {
