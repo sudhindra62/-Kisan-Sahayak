@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -124,10 +125,16 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         console.error("TTS Error:", error);
+
+        let toastDescription = `Could not generate audio. Please try again.`;
+        if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
+            toastDescription = 'The voice service is currently experiencing high demand. Please try again in a moment.';
+        }
+
         toast({
             variant: 'destructive',
             title: 'Text-to-Speech Error',
-            description: `Could not generate audio. Reason: ${errorMessage}`,
+            description: toastDescription,
         });
         return null;
     }
@@ -431,3 +438,5 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     </div>
   );
 }
+
+    
