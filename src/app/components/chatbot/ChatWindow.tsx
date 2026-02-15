@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, setDocument } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { ArrowLeft, ArrowUp, Bot, WifiOff, Mic, MicOff, Languages } from 'lucide-react';
 import type { ChatMessage, FarmerProfileInput } from '@/ai/schemas';
@@ -197,7 +197,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
               role: m.role,
               content: m.originalContent || m.content
           }));
-          setDocumentNonBlocking(chatHistoryRef, { 
+          setDocument(chatHistoryRef, { 
               id: userId,
               messages: historyToSave,
               updatedAt: new Date().toISOString()
