@@ -130,14 +130,8 @@ export async function translateText(data: TranslateTextInput): Promise<Translate
 }
 
 export async function textToSpeech(data: TextToSpeechInput): Promise<TextToSpeechOutput> {
-    try {
-        const result = await textToSpeechFlow(data);
-        return result;
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        // Log the full error on the server for debugging
-        console.error("Error in textToSpeech server action:", error);
-        // Return a payload with the error message for the client to handle
-        return { audioData: '', error: errorMessage };
-    }
+    // The Genkit flow now handles its own errors and returns them in the payload,
+    // so a try/catch block is no longer needed here.
+    const result = await textToSpeechFlow(data);
+    return result;
 }

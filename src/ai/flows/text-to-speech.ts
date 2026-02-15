@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow to convert text into speech.
@@ -53,34 +54,54 @@ const textToSpeechFlow = ai.defineFlow(
     inputSchema: TextToSpeechInputSchema,
     outputSchema: TextToSpeechOutputSchema,
   },
-  async (input) => {
-    const { media } = await voiceAi.generate({
-      model: 'googleai/gemini-2.5-flash-preview-tts',
-      config: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            // A standard, clear voice. Others include 'Algenib', 'Achernar', etc.
-            prebuiltVoiceConfig: { voiceName: 'Chara' },
+  async (input): Promise<TextToSpeechOutput> => {
+    try {
+      // Explicitly check for API key configuration on the server.
+      if (!process.env.VOICE_GEMINI_API_KEY && !process.env.GEMINI_API_KEY) {
+        throw new Error(
+          'The API key for the voice service is not configured on the server. Please set VOICE_GEMINI_API_KEY or GEMINI_API_KEY in your environment variables.'
+        );
+      }
+
+      // Prevent requests with empty text.
+      if (!input.text) {
+        return { audioData: '', error: 'Input text cannot be empty.' };
+      }
+
+      const { media } = await voiceAi.generate({
+        model: 'googleai/gemini-2.5-flash-preview-tts',
+        config: {
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            voiceConfig: {
+              // A standard, clear voice. Others include 'Algenib', 'Achernar', etc.
+              prebuiltVoiceConfig: { voiceName: 'Chara' },
+            },
           },
         },
-      },
-      prompt: input.text,
-    });
+        prompt: input.text,
+      });
 
-    if (!media || !media.url) {
-      throw new Error('No audio media was returned from the TTS service.');
+      if (!media || !media.url) {
+        throw new Error('No audio media was returned from the TTS service.');
+      }
+
+      const audioBuffer = Buffer.from(
+        media.url.substring(media.url.indexOf(',') + 1),
+        'base64'
+      );
+
+      const wavBase64 = await toWav(audioBuffer);
+
+      return {
+        audioData: 'data:audio/wav;base64,' + wavBase64,
+      };
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      // Log the full error on the server for easier debugging.
+      console.error(`[TTS Flow Error]: ${errorMessage}`);
+      // Return a structured error payload to the client.
+      return { audioData: '', error: errorMessage };
     }
-
-    const audioBuffer = Buffer.from(
-      media.url.substring(media.url.indexOf(',') + 1),
-      'base64'
-    );
-
-    const wavBase64 = await toWav(audioBuffer);
-
-    return {
-      audioData: 'data:audio/wav;base64,' + wavBase64,
-    };
   }
 );
