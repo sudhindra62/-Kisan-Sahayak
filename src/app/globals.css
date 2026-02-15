@@ -180,6 +180,11 @@ input, select {
   outline: none;
 }
 
+select option {
+  background: #083a2e;
+  color: #ffffff;
+}
+
 input::placeholder {
   color: rgba(255,255,255,0.45);
 }
