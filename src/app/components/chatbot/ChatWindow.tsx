@@ -44,6 +44,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const chatBodyRef = useRef<HTMLDivElement>(null);
   const audioPlayerRef = useRef<HTMLAudioElement>(null);
   const recognitionRef = useRef<any>(null);
+  const isFetchingAudioRef = useRef(false);
 
   const [translatingMessageIndex, setTranslatingMessageIndex] = useState<number | null>(null);
   
@@ -56,7 +57,6 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const [isFetchingAudio, setIsFetchingAudio] = useState(false);
   const [audioPlayingIndex, setAudioPlayingIndex] = useState<number | null>(null);
   const { toast } = useToast();
-  const isFetchingAudioRef = useRef(false);
 
   const firestore = useFirestore();
 
@@ -112,11 +112,22 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     }
   }, [messages, isSending, translatingMessageIndex]);
 
+  const handleAudioEnd = () => {
+    setAudioPlayingIndex(null);
+    isFetchingAudioRef.current = false;
+    setIsFetchingAudio(false);
+  };
+
+  const handleAudioPause = () => {
+    setAudioPlayingIndex(null);
+    isFetchingAudioRef.current = false;
+    setIsFetchingAudio(false);
+  };
+
   const handleTextToSpeech = async (textContent: string) => {
     if (!textContent) {
       return null;
     }
-    // Check cache first
     if (audioDataCache[textContent]) {
       return audioDataCache[textContent];
     }
@@ -124,7 +135,6 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     const response = await textToSpeech({ text: textContent });
 
     if (response.error) {
-        // The server now provides the user-friendly error message directly.
         toast({
             variant: 'destructive',
             title: 'Text-to-Speech Error',
@@ -133,39 +143,33 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
         return null;
     }
     
-    // Only cache and return if there was no error
     setAudioDataCache(prev => ({...prev, [textContent]: response.audioData}));
     return response.audioData;
   }
 
   const playAudio = async (textContent: string | undefined, index: number) => {
-    // 1. Check the synchronous ref lock. If busy, do nothing.
     if (isFetchingAudioRef.current) {
       return;
     }
     if (!textContent || !audioPlayerRef.current) return;
 
-    // If clicking the currently playing message, stop it.
     if (audioPlayingIndex === index) {
       audioPlayerRef.current.pause();
       return;
     }
 
-    // Stop any other currently playing audio.
-    if (audioPlayerRef.current && !audioPlayerRef.current.paused) {
+    if (!audioPlayerRef.current.paused) {
       audioPlayerRef.current.pause();
     }
 
-    // 2. Set the lock and UI state
     isFetchingAudioRef.current = true;
     setIsFetchingAudio(true);
     setAudioLoadingIndex(index);
-
+    
     try {
-      // 3. Make the async call
       const audioSrc = await handleTextToSpeech(textContent);
+      setAudioLoadingIndex(null);
 
-      // 4. If successful, play the audio
       if (audioSrc && audioPlayerRef.current) {
         audioPlayerRef.current.src = audioSrc;
         setAudioPlayingIndex(index);
@@ -175,14 +179,16 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             title: 'Audio Playback Error',
             description: 'Could not play the generated audio file.',
           });
-          setAudioPlayingIndex(null);
+          handleAudioPause();
         });
+      } else {
+        isFetchingAudioRef.current = false;
+        setIsFetchingAudio(false);
       }
-    } finally {
-      // 5. Release the lock and reset UI state in all cases
-      isFetchingAudioRef.current = false;
-      setIsFetchingAudio(false);
+    } catch (e) {
+      console.error("Unexpected error in playAudio:", e);
       setAudioLoadingIndex(null);
+      handleAudioPause();
     }
   };
 
@@ -240,7 +246,6 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     setMessages(finalMessages);
     setIsSending(false);
 
-    // Save history to Firestore
     if (isOnline && chatHistoryRef && !aiMessage.content.startsWith('Sorry')) {
       const historyToSave = finalMessages.map((m) => ({
         role: m.role,
@@ -262,36 +267,28 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     const messageToTranslate = messages[messageIndex];
     if (messageToTranslate.role !== 'model' || !messageToTranslate.originalContent) return;
 
-    // Stop audio before translating
     if (audioPlayerRef.current && !audioPlayerRef.current.paused) {
       audioPlayerRef.current.pause();
     }
 
-    if (targetLanguage === 'English') {
-        const updatedMessages = [...messages];
-        updatedMessages[messageIndex] = {
-            ...updatedMessages[messageIndex],
-            content: messageToTranslate.originalContent,
-        };
-        setMessages(updatedMessages);
-        playAudio(messageToTranslate.originalContent, messageIndex);
-        return;
-    }
-
     setTranslatingMessageIndex(messageIndex);
     try {
-        const response = await translateText({
-            text: messageToTranslate.originalContent,
-            targetLanguage,
-        });
+        let translatedText = messageToTranslate.originalContent;
+        if (targetLanguage !== 'English') {
+            const response = await translateText({
+                text: messageToTranslate.originalContent,
+                targetLanguage,
+            });
+            translatedText = response.translatedText;
+        }
 
         const updatedMessages = [...messages];
         updatedMessages[messageIndex] = {
             ...updatedMessages[messageIndex],
-            content: response.translatedText,
+            content: translatedText,
         };
         setMessages(updatedMessages);
-        playAudio(response.translatedText, messageIndex);
+        playAudio(translatedText, messageIndex);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         toast({
@@ -373,7 +370,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
 
   return (
     <div className="chat-page-container">
-      <audio ref={audioPlayerRef} onEnded={() => setAudioPlayingIndex(null)} onPause={() => setAudioPlayingIndex(null)} className="hidden" />
+      <audio ref={audioPlayerRef} onEnded={handleAudioEnd} onPause={handleAudioPause} className="hidden" />
       <div className="chat-header">
         <Link href="/" className="chat-back-btn">
             <ArrowLeft className="h-5 w-5" />
