@@ -7,7 +7,7 @@ import FarmerProfileForm from "@/app/components/farmer-profile-form";
 import SchemeResults from "@/app/components/scheme-results";
 import DocumentReadinessChecker from "@/app/components/document-readiness-checker";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth, useFirestore, useUser, initiateAnonymousSignIn, setDocumentNonBlocking } from "@/firebase";
+import { useAuth, useFirestore, useUser, initiateAnonymousSignIn, setDocument } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { analyzeSchemesOffline } from "@/lib/scheme-engine";
 
@@ -70,24 +70,22 @@ export default function Home() {
             annualIncome: data.annualIncome,
             documentSetId: userId,
         };
-        setDocumentNonBlocking(farmerProfileRef, farmerProfileForDb, { merge: true });
+        setDocument(farmerProfileRef, farmerProfileForDb, { merge: true });
 
         const docRef = doc(firestore, 'users', userId, 'uploaded_documents', userId);
         const docData = {
             id: userId,
-            landProofUrl: documents.landProofUrl || '',
-            incomeCertificateUrl: documents.incomeCertificateUrl || '',
-            identityProofUrl: documents.identityProofUrl || '',
-            damagedCropImageUrl: documents.damagedCropImageUrl || '',
+            landProofUrl: documents.landProofUrl || null,
+            incomeCertificateUrl: documents.incomeCertificateUrl || null,
+            identityProofUrl: documents.identityProofUrl || null,
+            damagedCropImageUrl: documents.damagedCropImageUrl || null,
             uploadTimestamp: new Date().toISOString(),
             verificationStatus: 'Pending',
         };
-        setDocumentNonBlocking(docRef, docData, { merge: true });
+        setDocument(docRef, docData, { merge: true });
     }
     // --- End Firestore save ---
 
-    // The scheme analysis is now fully offline and client-side.
-    // No need to show a long loading state if it's fast.
     // A small timeout can make the transition feel smoother if processing is instant.
     setTimeout(() => {
       try {
@@ -104,13 +102,11 @@ export default function Home() {
       } finally {
         setIsLoading(false);
       }
-    }, 100); // Very short delay
+    }, 100);
   };
 
   return (
     <main>
-        <div className="center-blend"></div>
-        <div className="center-glow"></div>
         <div className="form-container">
             <h1>KisanSahayak</h1>
             <p>

@@ -2,34 +2,44 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
+import {
+  Auth,
+  getAuth,
+  signInAnonymously,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from 'firebase/auth';
+import {
+  getFirestore,
+  setDoc as firestoreSetDoc,
+  addDoc as firestoreAddDoc,
+  updateDoc as firestoreUpdateDoc,
+  deleteDoc as firestoreDeleteDoc,
+  CollectionReference,
+  DocumentReference,
+  SetOptions,
+} from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
   if (!getApps().length) {
-    // Important! initializeApp() is called without any arguments because Firebase App Hosting
-    // integrates with the initializeApp() function to provide the environment variables needed to
-    // populate the FirebaseOptions in production. It is critical that we attempt to call initializeApp()
-    // without arguments.
     let firebaseApp;
     try {
-      // Attempt to initialize via Firebase App Hosting environment variables
       firebaseApp = initializeApp();
     } catch (e) {
-      // Only warn in production because it's normal to use the firebaseConfig to initialize
-      // during development
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
+      if (process.env.NODE_ENV === 'production') {
+        console.warn(
+          'Automatic initialization failed. Falling back to firebase config object.',
+          e
+        );
       }
       firebaseApp = initializeApp(firebaseConfig);
     }
-
     return getSdks(firebaseApp);
   }
-
-  // If already initialized, return the SDKs with the already initialized App
   return getSdks(getApp());
 }
 
@@ -42,11 +52,105 @@ export function getSdks(firebaseApp: FirebaseApp) {
   };
 }
 
+// Re-export core hooks and providers
 export * from './provider';
 export * from './client-provider';
 export * from './firestore/use-collection';
 export * from './firestore/use-doc';
-export * from './non-blocking-updates';
-export * from './non-blocking-login';
 export * from './errors';
 export * from './error-emitter';
+
+
+// == Non-Blocking Auth & Data Operations ==
+
+// -- Authentication --
+
+export function initiateAnonymousSignIn(authInstance: Auth): void {
+  signInAnonymously(authInstance).catch((error) => {
+    // Although non-blocking for the UI, log auth errors for debugging
+    console.error('Anonymous sign-in failed:', error);
+  });
+}
+
+export function initiateEmailSignUp(
+  authInstance: Auth,
+  email: string,
+  password: string
+): void {
+  createUserWithEmailAndPassword(authInstance, email, password).catch(
+    (error) => {
+      console.error('Email sign-up failed:', error);
+    }
+  );
+}
+
+export function initiateEmailSignIn(
+  authInstance: Auth,
+  email: string,
+  password: string
+): void {
+  signInWithEmailAndPassword(authInstance, email, password).catch((error) => {
+    console.error('Email sign-in failed:', error);
+  });
+}
+
+
+// -- Firestore --
+
+export function setDocument(
+  docRef: DocumentReference,
+  data: any,
+  options: SetOptions
+) {
+  firestoreSetDoc(docRef, data, options).catch((error) => {
+    errorEmitter.emit(
+      'permission-error',
+      new FirestorePermissionError({
+        path: docRef.path,
+        operation: options.merge ? 'update' : 'create',
+        requestResourceData: data,
+      })
+    );
+  });
+}
+
+export function addDocument(colRef: CollectionReference, data: any) {
+  const promise = firestoreAddDoc(colRef, data).catch((error) => {
+    errorEmitter.emit(
+      'permission-error',
+      new FirestorePermissionError({
+        path: colRef.path,
+        operation: 'create',
+        requestResourceData: data,
+      })
+    );
+    // Re-throw to allow local catch blocks if needed, though global handler is primary
+    throw error;
+  });
+  return promise;
+}
+
+export function updateDocument(docRef: DocumentReference, data: any) {
+  firestoreUpdateDoc(docRef, data).catch((error) => {
+    errorEmitter.emit(
+      'permission-error',
+      new FirestorePermissionError({
+        path: docRef.path,
+        operation: 'update',
+        requestResourceData: data,
+      })
+    );
+  });
+}
+
+export function deleteDocument(docRef: DocumentReference) {
+  firestoreDeleteDoc(docRef).catch((error) => {
+    errorEmitter.emit(
+      'permission-error',
+      new FirestorePermissionError({
+        path: docRef.path,
+        operation: 'delete',
+      })
+    );
+  });
+}

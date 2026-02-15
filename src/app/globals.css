@@ -1,13 +1,44 @@
-/* ============================= */
-/* RESET */
-/* ============================= */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Poppins', sans-serif;
+@layer base {
+  :root {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --radius: 0.5rem;
+  }
 }
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ============================= */
+/* GLOBAL STYLES */
+/* ============================= */
 
 body {
   min-height: 100vh;
@@ -15,37 +46,28 @@ body {
   color: #ffffff;
   position: relative;
   background: #000;
+  font-family: 'Poppins', sans-serif;
 }
-
-/* ============================= */
-/* LAYER 1 — TRUE 50/50 SPLIT */
-/* ============================= */
 
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -5;
-
   background: linear-gradient(
     90deg,
-    #083a2e 0%,         /* emerald */
+    #083a2e 0%,
     #083a2e 48%,
-    #8f6408 52%,        /* strong gold */
+    #8f6408 52%,
     #8f6408 100%
   );
 }
-
-/* ============================= */
-/* LAYER 2 — GOLD INTENSITY BOOST */
-/* ============================= */
 
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -4;
-
   background: linear-gradient(
     90deg,
     transparent 50%,
@@ -54,15 +76,10 @@ body::after {
   );
 }
 
-/* ============================= */
-/* LAYER 3 — CENTER MIX SEAM */
-/* ============================= */
-
 .center-blend {
   position: fixed;
   inset: 0;
   z-index: -3;
-
   background: linear-gradient(
     90deg,
     transparent 44%,
@@ -72,15 +89,10 @@ body::after {
   );
 }
 
-/* ============================= */
-/* LAYER 4 — CENTER PREMIUM GLOW */
-/* ============================= */
-
 .center-glow {
   position: fixed;
   inset: 0;
   z-index: -2;
-
   background: radial-gradient(
     circle at 50% 45%,
     rgba(255,190,60,0.35) 0%,
@@ -88,10 +100,6 @@ body::after {
     transparent 55%
   );
 }
-
-/* ============================= */
-/* LAYER 5 — EDGE VIGNETTE */
-/* ============================= */
 
 body {
   box-shadow: inset 0 0 280px rgba(0,0,0,0.9);
@@ -107,17 +115,13 @@ body {
   margin: 110px auto;
   padding: 75px;
   border-radius: 32px;
-
   background: linear-gradient(
     135deg,
     rgba(6,45,35,0.92),
     rgba(100,65,10,0.88)
   );
-
   backdrop-filter: blur(50px);
-
   border: 1px solid rgba(255,255,255,0.05);
-
   box-shadow:
     0 80px 200px rgba(0,0,0,0.95),
     0 0 140px rgba(210,160,30,0.2);
@@ -168,21 +172,24 @@ label {
 
 input, select {
   padding: 20px;
-  border-radius: 22px;
-
+  border-radius: 14px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.07);
-
   color: #ffffff;
   font-size: 15px;
-
   transition: all 0.3s ease;
   outline: none;
 }
 
 select option {
-  background: #083a2e;
+  background: #0d3c30;
   color: #ffffff;
+}
+
+select:disabled {
+    background: rgba(0,0,0,0.2);
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 input::placeholder {
@@ -192,7 +199,6 @@ input::placeholder {
 input:focus, select:focus {
   outline: none;
   border-color: #d6a93c;
-
   box-shadow:
     0 0 0 2px rgba(214,169,60,0.25),
     0 0 35px rgba(214,169,60,0.5);
@@ -338,7 +344,7 @@ select {
   margin-top: 80px;
   width: 100%;
   padding: 28px;
-  border-radius: 90px;
+  border-radius: 14px;
   border: none;
 
   font-size: 18px;
@@ -361,6 +367,7 @@ select {
 
   transition: all 0.35s ease;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .premium-btn:hover:not(:disabled) {
@@ -460,7 +467,7 @@ select {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  border-radius: 60px;
+  border-radius: 12px;
 }
 
 .no-results-card {
@@ -494,6 +501,7 @@ select {
     color: #fdd835;
     font-size: 13px;
     margin-top: 12px;
+    text-align: left;
 }
 
 .loading-spinner {
@@ -520,19 +528,6 @@ select {
   font-weight: 600;
   border: 1px solid rgba(214, 169, 60, 0.5);
   flex-shrink: 0;
-}
-
-.possible-relevance-badge {
-  display: inline-flex;
-  align-items: center;
-  background: rgba(255, 245, 157, 0.1);
-  color: #fff59d;
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 400;
-  margin-bottom: 20px;
-  border: 1px solid rgba(255, 245, 157, 0.2);
 }
 
 
@@ -677,43 +672,6 @@ select {
 }
 
 /* ============================= */
-/* SUMMARY REPORT STYLES         */
-/* ============================= */
-
-.summary-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 1.25rem;
-    padding: 1.5rem;
-    background: rgba(0,0,0,0.2);
-    border-radius: 18px;
-    border: 1px solid rgba(255,255,255,0.08);
-}
-.summary-icon {
-    flex-shrink: 0;
-    width: 2.5rem;
-    height: 2.5rem;
-    color: #f5c542;
-    margin-top: 4px;
-}
-.summary-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #fff;
-    margin-bottom: 0.5rem;
-}
-.summary-text {
-    color: rgba(255,255,255,0.85);
-    line-height: 1.7;
-    text-align: left;
-    margin-bottom: 0.5rem;
-}
-.summary-small {
-    font-size: 0.8rem;
-    color: rgba(255,255,255,0.6);
-}
-
-/* ============================= */
 /* CHATBOT STYLES                */
 /* ============================= */
 
@@ -734,34 +692,12 @@ select {
   cursor: pointer;
   box-shadow: 0 10px 30px rgba(0,0,0,0.4), 0 0 40px rgba(214,169,60,0.5);
   transition: all 0.3s ease;
+  text-decoration: none;
 }
 
 .chatbot-trigger:hover {
   transform: scale(1.1) rotate(15deg);
   box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 50px rgba(214,169,60,0.7);
-}
-
-.chat-window {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90vw;
-  max-width: 480px;
-  height: 80vh;
-  max-height: 700px;
-  z-index: 1001;
-  display: flex;
-  flex-direction: column;
-  border-radius: 28px;
-  overflow: hidden;
-  
-  background: linear-gradient(135deg, rgba(6,45,35,0.95), rgba(100,65,10,0.92));
-  backdrop-filter: blur(40px);
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 50px 150px rgba(0,0,0,0.8);
-  
-  animation: fade-in 0.4s ease-out;
 }
 
 .chat-page-container {
@@ -793,10 +729,9 @@ select {
   font-size: 1.1rem;
   font-weight: 600;
   color: #fff;
-  margin-left: 12px;
 }
 
-.chat-close-btn, .chat-back-btn {
+.chat-back-btn {
   background: none;
   border: none;
   color: rgba(255,255,255,0.6);
@@ -807,18 +742,11 @@ select {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-right: 12px;
+  text-decoration: none;
 }
 
-.chat-close-btn {
-    margin-left: auto;
-}
-
-.chat-back-btn {
-    margin-right: 12px;
-}
-
-
-.chat-close-btn:hover, .chat-back-btn:hover {
+.chat-back-btn:hover {
   color: #fff;
   background: rgba(255,255,255,0.1);
 }
@@ -1092,17 +1020,7 @@ select {
 
 
 @media (max-width: 600px) {
-  .chatbot-trigger {
-    width: 56px;
-    height: 56px;
-    top: 20px;
-    right: 20px;
-  }
-  .chatbot-trigger .lucide {
-    width: 28px;
-    height: 28px;
-  }
-  .chat-window {
+  .chat-page-container {
     width: 100vw;
     height: 100vh;
     max-height: none;

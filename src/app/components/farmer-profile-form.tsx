@@ -1,11 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import type { FarmerProfileInput } from "@/ai/schemas";
 import { IndianRupee, FileUp } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FileUploader from "./file-uploader";
 
 // Zod schema to match the logic from the AI flow.
@@ -52,6 +52,25 @@ export default function FarmerProfileForm({ onSubmit, isLoading, userId, isUserL
       farmerCategory: 'Small and Marginal',
     },
   });
+
+  const landSizeValue = useWatch({
+    control: form.control,
+    name: 'landSize'
+  });
+
+  useEffect(() => {
+      const getCategory = (size: number | undefined) => {
+        if (size === undefined) return 'Small and Marginal';
+        if (size < 5) return 'Small and Marginal';
+        if (size <= 10) return 'Medium';
+        return 'Large';
+      }
+      const newCategory = getCategory(landSizeValue);
+      if (form.getValues('farmerCategory') !== newCategory) {
+          form.setValue('farmerCategory', newCategory);
+      }
+  }, [landSizeValue, form]);
+
 
   const handleUploadComplete = (docType: keyof DocumentsState, url: string) => {
     setDocuments(prev => ({...prev, [docType]: url}));
@@ -117,7 +136,7 @@ export default function FarmerProfileForm({ onSubmit, isLoading, userId, isUserL
 
             <div className="input-group">
                 <label>Farmer Category</label>
-                <select {...form.register("farmerCategory")}>
+                <select {...form.register("farmerCategory")} disabled>
                     <option value="Small and Marginal">Small and Marginal (&lt; 5 acres)</option>
                     <option value="Medium">Medium (5-10 acres)</option>
                     <option value="Large">Large (&gt; 10 acres)</option>
