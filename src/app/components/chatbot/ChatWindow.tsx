@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useFirestore, useDoc, useMemoFirebase, setDocument } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { ArrowLeft, ArrowUp, Bot, WifiOff, Mic, MicOff, Languages } from 'lucide-react';
+import { ArrowLeft, ArrowUp, Bot, WifiOff, Mic, MicOff, Languages, Waves } from 'lucide-react';
 import type { ChatMessage, FarmerProfileInput } from '@/ai/schemas';
 import { getChatbotResponse, translateText, textToSpeech } from '@/app/actions';
 import ChatMessageDisplay from './ChatMessage';
@@ -136,6 +136,13 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const playAudio = async (textContent: string | undefined) => {
     if (!textContent || !audioPlayerRef.current) return;
     
+    if (currentlyPlaying === textContent) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.currentTime = 0;
+        setCurrentlyPlaying(null);
+        return;
+    }
+
     setCurrentlyPlaying(textContent);
     const audioSrc = await handleTextToSpeech(textContent);
     
@@ -193,8 +200,9 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             playAudio(aiResponse);
 
         } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
             console.error("Failed to get chat response:", error);
-            aiMessage = { role: 'model', content: 'Sorry, I couldn\'t connect to the AI assistant. Please check your internet connection and try again.', originalContent: 'Sorry, I couldn\'t connect to the AI assistant. Please check your internet connection and try again.'};
+            aiMessage = { role: 'model', content: `Sorry, I'm having trouble connecting. Reason: ${errorMessage}`, originalContent: `Sorry, I'm having trouble connecting. Reason: ${errorMessage}`};
         }
     } else {
         const offlineResponse = getOfflineChatbotResponse(content, farmerProfile);
@@ -242,6 +250,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             content: messageToTranslate.originalContent,
         };
         setMessages(updatedMessages);
+        playAudio(messageToTranslate.originalContent);
         return;
     }
 
@@ -258,8 +267,14 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             content: response.translatedText,
         };
         setMessages(updatedMessages);
+        playAudio(response.translatedText);
     } catch (error) {
-        console.error("Failed to translate message:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        toast({
+            variant: 'destructive',
+            title: 'Translation Error',
+            description: `Could not translate message. Reason: ${errorMessage}`,
+        });
     } finally {
         setTranslatingMessageIndex(null);
     }
@@ -272,7 +287,11 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     }
     
     if (!speechApiSupported) {
-        alert("Sorry, your browser doesn't support speech recognition.");
+        toast({
+            variant: 'destructive',
+            title: 'Unsupported Browser',
+            description: 'Sorry, your browser doesn\'t support speech recognition.',
+        });
         return;
     }
     
