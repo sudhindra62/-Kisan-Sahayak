@@ -135,7 +135,9 @@ export async function textToSpeech(data: TextToSpeechInput): Promise<TextToSpeec
         return result;
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
+        // Log the full error on the server for debugging
         console.error("Error in textToSpeech server action:", error);
-        throw new Error(`Failed to convert text to speech. Reason: ${errorMessage}`);
+        // Return a payload with the error message for the client to handle
+        return { audioData: '', error: errorMessage };
     }
 }

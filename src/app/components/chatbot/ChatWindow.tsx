@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useFirestore, useDoc, useMemoFirebase, setDocument } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { ArrowLeft, ArrowUp, Bot, WifiOff, Mic, MicOff, Languages, Waves } from 'lucide-react';
+import { ArrowLeft, ArrowUp, Bot, WifiOff, Mic, MicOff, Languages } from 'lucide-react';
 import type { ChatMessage, FarmerProfileInput } from '@/ai/schemas';
 import { getChatbotResponse, translateText, textToSpeech } from '@/app/actions';
 import ChatMessageDisplay from './ChatMessage';
@@ -118,13 +118,12 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     if (audioDataCache[textContent]) {
       return audioDataCache[textContent];
     }
-    try {
-        const response = await textToSpeech({ text: textContent });
-        setAudioDataCache(prev => ({...prev, [textContent]: response.audioData}));
-        return response.audioData;
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-        console.error("TTS Error:", error);
+
+    const response = await textToSpeech({ text: textContent });
+
+    if (response.error) {
+        const errorMessage = response.error;
+        console.error("TTS Error:", errorMessage);
 
         let toastDescription = `Could not generate audio. Please try again.`;
         if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
@@ -138,6 +137,10 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
         });
         return null;
     }
+    
+    // Only cache and return if there was no error
+    setAudioDataCache(prev => ({...prev, [textContent]: response.audioData}));
+    return response.audioData;
   }
 
   const playAudio = async (textContent: string | undefined) => {
@@ -383,7 +386,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
             message={msg} 
             isTranslating={translatingMessageIndex === index}
             onTranslate={(lang) => handleTranslateMessage(index, lang)}
-            areOnlineActionsAvailable={isOnline && msg.role === 'model' && !!msg.originalContent}
+            areOnlineActionsAvailable={isOnline}
             isCurrentlyPlaying={currentlyPlaying === msg.content}
             onPlayAudio={() => playAudio(msg.content)}
           />
@@ -438,5 +441,3 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     </div>
   );
 }
-
-    

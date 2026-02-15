@@ -215,5 +215,6 @@ export const TextToSpeechOutputSchema = z.object({
   audioData: z
     .string()
     .describe('A base64 encoded data URI for the generated audio file (WAV format).'),
+  error: z.string().optional().describe('An error message if TTS failed.'),
 });
 export type TextToSpeechOutput = z.infer<typeof TextToSpeechOutputSchema>;
