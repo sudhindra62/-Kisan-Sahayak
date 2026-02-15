@@ -5,7 +5,7 @@
  * - textToSpeech - A function that handles the TTS conversion.
  */
 
-import { voiceAi } from '@/ai/genkit';
+import { ai, voiceAi } from '@/ai/genkit';
 import {
   type TextToSpeechInput,
   TextToSpeechInputSchema,
@@ -47,7 +47,7 @@ export async function textToSpeech(
   return textToSpeechFlow(input);
 }
 
-const textToSpeechFlow = voiceAi.defineFlow(
+const textToSpeechFlow = ai.defineFlow(
   {
     name: 'textToSpeechFlow',
     inputSchema: TextToSpeechInputSchema,
