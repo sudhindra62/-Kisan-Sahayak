@@ -65,6 +65,7 @@ const findCentralReliefScheme = ai.defineTool(
 
 const prompt = ai.definePrompt({
     name: 'farmerAssistantChatPrompt',
+    model: 'googleai/gemini-2.5-flash',
     tools: [findCentralReliefScheme],
     input: { schema: ChatbotInputSchema },
     output: { format: 'text' },

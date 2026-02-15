@@ -29,6 +29,7 @@ export async function checkDocumentReadiness(
 
 const prompt = ai.definePrompt({
   name: 'documentReadinessPrompt',
+  model: 'googleai/gemini-2.5-flash',
   input: { schema: DocumentReadinessInputSchema },
   output: { schema: DocumentReadinessOutputSchema },
   prompt: `You are an expert AI assistant for Indian farmers, specializing in documentation requirements for government schemes.
@@ -84,5 +85,3 @@ const documentReadinessCheckerFlow = ai.defineFlow(
     return output;
   }
 );
-
-    

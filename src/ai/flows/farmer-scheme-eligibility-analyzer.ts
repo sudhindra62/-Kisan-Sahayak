@@ -95,6 +95,7 @@ const getGovernmentSchemes = ai.defineTool(
 // Define the prompt that uses the dynamically generated schemes and the farmer's profile
 const farmerSchemeEligibilityPrompt = ai.definePrompt({
   name: 'farmerSchemeEligibilityPrompt',
+  model: 'googleai/gemini-2.5-flash',
   input: {
     schema: z.object({
       farmerProfile: FarmerProfileInputSchema,

@@ -22,6 +22,7 @@ export async function summarizeSchemeBenefits(
 
 const prompt = ai.definePrompt({
   name: 'schemeBenefitSummarizerPrompt',
+  model: 'googleai/gemini-2.5-flash',
   input: { schema: SchemeBenefitSummarizerInputSchema },
   output: { schema: SchemeBenefitSummarizerOutputSchema },
   prompt: `You are an expert at summarizing government schemes for farmers. Your task is to extract the key benefits and core eligibility requirements from the provided scheme details.

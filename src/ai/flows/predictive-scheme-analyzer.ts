@@ -27,6 +27,7 @@ export async function predictUpcomingSchemes(
 
 const prompt = ai.definePrompt({
   name: 'predictiveSchemePrompt',
+  model: 'googleai/gemini-2.5-flash',
   input: { schema: FarmerProfileInputSchema },
   output: { schema: PredictiveAnalysisOutputSchema },
   prompt: `You are an expert agricultural policy analyst in India with predictive capabilities. Your task is to forecast potential government schemes that could become relevant to a farmer in the next 6 months.

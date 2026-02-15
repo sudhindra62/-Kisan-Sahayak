@@ -9,6 +9,7 @@ import { getChatbotResponse, translateText, textToSpeech } from '@/app/actions';
 import ChatMessageDisplay from './ChatMessage';
 import Link from 'next/link';
 import { getOfflineChatbotResponse } from '@/lib/offline-chat-engine';
+import { useToast } from '@/hooks/use-toast';
 
 declare global {
     interface Window {
@@ -52,6 +53,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const [speechLang, setSpeechLang] = useState('en-IN');
   const [audioDataCache, setAudioDataCache] = useState<Record<string, string>>({});
   const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const firestore = useFirestore();
 
@@ -263,7 +265,34 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
 
     recognitionRef.current.onstart = () => setIsRecording(true);
     recognitionRef.current.onend = () => setIsRecording(false);
-    recognitionRef.current.onerror = (event: any) => console.error('Speech recognition error', event.error);
+    
+    recognitionRef.current.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        let errorMessage = 'An unknown error occurred during speech recognition.';
+        switch (event.error) {
+            case 'no-speech':
+                errorMessage = 'No speech was detected. Please try again.';
+                break;
+            case 'audio-capture':
+                errorMessage = 'Could not start audio capture. Please check your microphone.';
+                break;
+            case 'not-allowed':
+                errorMessage = 'Microphone access was denied. Please allow microphone access in your browser settings.';
+                break;
+            case 'network':
+                errorMessage = 'A network error occurred. Please check your connection.';
+                break;
+            case 'aborted':
+                // Don't show an error if the user manually stops it or it times out.
+                return;
+        }
+        toast({
+            variant: 'destructive',
+            title: 'Voice Error',
+            description: errorMessage,
+        });
+        setIsRecording(false);
+    };
     
     recognitionRef.current.onresult = (event: any) => {
         const transcript = Array.from(event.results)

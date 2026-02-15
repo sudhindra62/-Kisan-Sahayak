@@ -22,6 +22,7 @@ export async function generateSchemeApplicationGuide(
 
 const prompt = ai.definePrompt({
     name: 'schemeApplicationGuidePrompt',
+    model: 'googleai/gemini-2.5-flash',
     input: { schema: SchemeApplicationGuideInputSchema },
     output: { schema: SchemeApplicationGuideOutputSchema },
     prompt: `You are an expert AI assistant who creates personalized application guides for Indian government schemes for farmers.

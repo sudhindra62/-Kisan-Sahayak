@@ -21,6 +21,7 @@ export async function generateFarmerSummary(
 
 const prompt = ai.definePrompt({
   name: 'farmerSummaryPrompt',
+  model: 'googleai/gemini-2.5-flash',
   input: { schema: FarmerSummaryInputSchema },
   output: { schema: FarmerSummaryOutputSchema },
   prompt: `You are an encouraging and insightful AI farm advisor. Your task is to create a final summary report for a farmer based on their profile and the results of a government scheme analysis. The tone must be motivational and empowering.
