@@ -38,21 +38,21 @@ const speechLanguages = [
 
 export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const [input, setInput] = useState('');
-  const [messages, setMessages = useState<DisplayMessage[]>([initialMessage]);
-  const [isSending, setIsSending = useState(false);
-  const [isOnline, setIsOnline = useState(true);
+  const [messages, setMessages] = useState<DisplayMessage[]>([initialMessage]);
+  const [isSending, setIsSending] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
   const chatBodyRef = useRef<HTMLDivElement>(null);
   const audioPlayerRef = useRef<HTMLAudioElement>(null);
   const recognitionRef = useRef<any>(null);
 
-  const [translatingMessageIndex, setTranslatingMessageIndex = useState<number | null>(null);
+  const [translatingMessageIndex, setTranslatingMessageIndex] = useState<number | null>(null);
   
   // Voice state
-  const [speechApiSupported, setSpeechApiSupported = useState(false);
-  const [isRecording, setIsRecording = useState(false);
-  const [speechLang, setSpeechLang = useState('en-IN');
-  const [audioDataCache, setAudioDataCache = useState<Record<string, string>>({});
-  const [currentlyPlaying, setCurrentlyPlaying = useState<string | null>(null);
+  const [speechApiSupported, setSpeechApiSupported] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [speechLang, setSpeechLang] = useState('en-IN');
+  const [audioDataCache, setAudioDataCache] = useState<Record<string, string>>({});
+  const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
   const { toast } = useToast();
 
   const firestore = useFirestore();
@@ -412,5 +412,3 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     </div>
   );
 }
-
-    
