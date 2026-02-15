@@ -56,6 +56,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   const [isFetchingAudio, setIsFetchingAudio] = useState(false);
   const [audioPlayingIndex, setAudioPlayingIndex] = useState<number | null>(null);
   const { toast } = useToast();
+  const isFetchingAudioRef = useRef(false);
 
   const firestore = useFirestore();
 
@@ -138,8 +139,8 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
   }
 
   const playAudio = async (textContent: string | undefined, index: number) => {
-    // 1. Check the master lock. If busy, do nothing.
-    if (isFetchingAudio) {
+    // 1. Check the synchronous ref lock. If busy, do nothing.
+    if (isFetchingAudioRef.current) {
       return;
     }
     if (!textContent || !audioPlayerRef.current) return;
@@ -156,6 +157,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
     }
 
     // 2. Set the lock and UI state
+    isFetchingAudioRef.current = true;
     setIsFetchingAudio(true);
     setAudioLoadingIndex(index);
 
@@ -178,6 +180,7 @@ export default function ChatWindow({ farmerProfile, userId }: ChatWindowProps) {
       }
     } finally {
       // 5. Release the lock and reset UI state in all cases
+      isFetchingAudioRef.current = false;
       setIsFetchingAudio(false);
       setAudioLoadingIndex(null);
     }
